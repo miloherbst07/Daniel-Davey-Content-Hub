@@ -1,0 +1,1801 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VERUS Content Hub</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#081013">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: sticky brand bar + text tabs, then one working surface per section. Single dark VERUS look. */
+:root{
+  color-scheme:dark;
+  --bg:#081013; --bg-glow:#0f2a27; --panel:#0f1a1d; --panel2:#132226; --field:#0b1417;
+  --ink:#f1f6f4; --ink2:#a7b7b2; --ink3:#6c7f7a;
+  --line:rgba(190,240,225,.08); --line2:rgba(190,240,225,.15);
+  --mint:#5fd1a7; --mint2:#3f9e8c; --mintInk:#04130e; --mintSoft:rgba(95,209,167,.12);
+  --accent:var(--mint); --accentInk:var(--mintInk);
+  --danger:#ff7a6b; --ok:#5fd1a7; --warn:#f0b85a;
+  --radius:18px; --shadow:0 10px 40px rgba(0,0,0,.35);
+  --head:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif; --body:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14.5px;line-height:1.5;-webkit-text-size-adjust:100%}
+body{background:radial-gradient(1100px 520px at 70% -120px,var(--bg-glow),transparent 70%),var(--bg);background-attachment:fixed;min-height:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--mint)}
+h1,h2,h3{font-family:var(--head);margin:0;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+h2{font-size:30px;line-height:1.1} h3{font-size:18px;font-weight:700;letter-spacing:-.01em}
+h4{margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.2em;color:var(--mint)}
+.muted{color:var(--ink2)} .tiny{font-size:12px;color:var(--ink3)}
+:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* ---------- top bar ---------- */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(8,16,19,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.bar,nav.tabs,.demo-banner{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.bar{display:flex;align-items:center;gap:14px;padding-block:12px}
+.brand{display:flex;align-items:center;gap:14px;white-space:nowrap}
+.brand .wm{display:flex;flex-direction:column;line-height:1}
+.brand .wm b{font-size:17px;font-weight:800;letter-spacing:.16em}
+.brand .wm i{font-style:normal;font-size:11.5px;font-weight:500;letter-spacing:.24em;color:var(--ink2);margin-top:3px}
+.brand .div{width:1px;height:30px;background:var(--line2)}
+.brand .lbl{font-size:12px;font-weight:700;letter-spacing:.22em;color:var(--mint)}
+.bar .sp{flex:1;min-width:0}
+@media (max-width:480px){.brand .div,.brand .lbl{display:none}}
+.userchip{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px}
+.avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--mintSoft);color:var(--mint);border:1px solid rgba(95,209,167,.35);font-weight:800;font-size:11.5px;flex:none;letter-spacing:.04em}
+nav.tabs{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;padding-block:0}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{border:0;background:transparent;padding:10px 16px 12px;font-weight:600;font-size:14.5px;color:var(--ink2);cursor:pointer;white-space:nowrap;position:relative}
+nav.tabs button+button::before{content:"";position:absolute;left:0;top:12px;bottom:14px;width:1px;background:var(--line2)}
+nav.tabs button:hover{color:var(--ink)}
+nav.tabs button.on{color:var(--mint)}
+nav.tabs button.on::after{content:"";position:absolute;left:16px;right:16px;bottom:0;height:2px;border-radius:2px;background:var(--mint);box-shadow:0 0 12px var(--mint)}
+.badge{display:inline-block;min-width:18px;padding:0 5px;height:18px;line-height:18px;border-radius:9px;background:var(--warn);color:#241600;font-size:11px;font-weight:800;text-align:center;margin-left:6px}
+.demo-banner{background:var(--mintSoft);color:var(--ink2);font-size:12.5px;padding-block:7px;border-bottom:1px solid var(--line)}
+.demo-banner b{color:var(--mint)}
+main{max-width:1400px;margin:0 auto;padding-block:22px calc(48px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+/* ---------- generic ---------- */
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.vhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.vhead h2{margin-right:auto}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.02),transparent),var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+.pad{padding:18px}
+.btn{border:1px solid var(--line2);background:var(--panel2);padding:9px 15px;border-radius:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;color:var(--ink);transition:border-color .15s,background .15s}
+.btn:hover{border-color:rgba(95,209,167,.45)}
+.btn.primary{background:linear-gradient(135deg,#63d3a8,#3f9e8c);color:#fff;border-color:transparent;box-shadow:0 0 22px rgba(95,209,167,.22);text-shadow:0 1px 1px rgba(0,0,0,.15)}
+.btn.primary:hover{box-shadow:0 0 28px rgba(95,209,167,.35)}
+.btn.danger{color:var(--danger);border-color:rgba(255,122,107,.35);background:transparent}
+.btn.sm{padding:6px 11px;font-size:12.5px;border-radius:10px}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--mint)}
+.btn[disabled]{opacity:.5;cursor:default}
+.icon-btn{border:0;background:transparent;cursor:pointer;padding:5px 7px;border-radius:8px;color:var(--ink3);font-size:14px;line-height:1}
+.icon-btn:hover{background:var(--panel2);color:var(--ink)}
+.icon-btn[disabled]{opacity:.3;cursor:default}
+[hidden]{display:none!important}
+input[type=text],input[type=email],input[type=url],input[type=search],input[type=tel],input[type=password],input[type=date],input[type=number],input:not([type]),select,textarea{
+  width:100%;padding:9px 12px;border:1px solid var(--line2);border-radius:12px;background:var(--field);min-height:40px;color:var(--ink)}
+input::placeholder,textarea::placeholder{color:var(--ink3)}
+textarea{resize:vertical;min-height:70px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(95,209,167,.6);box-shadow:0 0 0 3px rgba(95,209,167,.12)}
+input[type=checkbox]{accent-color:var(--mint)}
+label.f{display:block;font-size:11px;font-weight:700;color:var(--ink2);margin:0 0 6px;text-transform:uppercase;letter-spacing:.14em}
+.field{margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:560px){.grid2,.grid3{grid-template-columns:1fr}}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:600;background:rgba(255,255,255,.04);border:1px solid var(--line2);white-space:nowrap;color:var(--ink2)}
+.chip .dot{width:8px;height:8px;border-radius:50%}
+.pill-sel{display:flex;gap:6px;flex-wrap:wrap}
+.pill-sel label{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--line2);border-radius:999px;cursor:pointer;font-weight:600;font-size:13px;user-select:none;color:var(--ink2)}
+.pill-sel input{display:none}
+.pill-sel label.on{background:var(--mintSoft);color:var(--mint);border-color:rgba(95,209,167,.55)}
+.empty{padding:30px;text-align:center;color:var(--ink3)}
+/* ---------- calendar ---------- */
+.cal-wrap{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}
+@media (max-width:980px){.cal-wrap{grid-template-columns:1fr}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;font-size:12.5px;font-weight:600;color:var(--ink2)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.cal{overflow:hidden}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:4px 0 8px}
+.cal-dow div{text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:var(--ink3)}
+.cal-week{border-radius:14px;padding:3px;margin-bottom:4px}
+.cal-week.sel{background:var(--mintSoft)}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{position:relative;min-height:108px;border:1px solid var(--line);border-radius:12px;cursor:pointer;overflow:hidden;background:var(--field);transition:border-color .15s}
+.day:hover{border-color:rgba(95,209,167,.4)}
+.day.out{opacity:.45}
+.dnum{position:absolute;top:6px;left:7px;z-index:2;font-size:13px;font-weight:800;color:var(--ink2);padding:0 6px;border-radius:7px;line-height:22px}
+.day .bands ~ .dnum, .day:has(.bands) .dnum{background:rgba(0,0,0,.32);color:#fff}
+.day.today .dnum{background:var(--mint);color:var(--mintInk)}
+.day.selday{border-color:var(--mint);box-shadow:0 0 0 1px var(--mint),0 0 18px rgba(95,209,167,.18)}
+.bands{position:absolute;inset:0;display:flex;flex-direction:column}
+.band{flex:1;min-height:0;display:flex;align-items:flex-end;justify-content:space-between;gap:4px;padding:3px 7px 5px;font-size:11.5px;font-weight:700;line-height:1.2;border-top:1px solid rgba(0,0,0,.25);overflow:hidden}
+.band:first-child{border-top:0;padding-top:30px}
+.band .bt{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.band .bs{flex:none;font-size:11px}
+.band.s-tofilm{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.2) 0 6px,transparent 6px 12px)}
+.band.s-edited{background-image:radial-gradient(rgba(255,255,255,.3) 1.2px,transparent 1.4px);background-size:7px 7px}
+.band:hover{filter:brightness(1.08)}
+.mix{display:flex;height:4px;border-radius:2px;overflow:hidden;background:rgba(255,255,255,.05);margin:5px 4px 1px}
+.mix div{height:100%}
+@media (max-width:640px){
+  .cal{padding:6px}
+  .cal-days,.cal-dow{gap:3px}
+  .day{min-height:64px;border-radius:9px}
+  .band .bt{display:none}
+  .band{justify-content:flex-end;padding:2px 3px}
+  .band:first-child{padding-top:24px}
+  .dnum{font-size:11.5px;top:3px;left:3px;padding:0 4px;line-height:18px}
+  .cal-dow div{letter-spacing:.06em;font-size:10px}
+}
+.side h3{font-weight:800}
+.side .wk-mix{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px}
+.side-day{margin-top:14px}
+.side-day .dh{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:var(--ink3);margin-bottom:7px;display:flex;justify-content:space-between;align-items:center}
+.side-day.hl .dh{color:var(--mint)}
+.sitem{display:flex;gap:11px;padding:11px 12px;border:1px solid var(--line);border-radius:14px;margin-bottom:7px;cursor:pointer;background:var(--field)}
+.sitem:hover{border-color:rgba(95,209,167,.4)}
+.sitem .sw{width:4px;border-radius:3px;flex:none}
+.sitem .st{font-weight:700;font-size:14px;line-height:1.3}
+.sitem .sm{font-size:12px;color:var(--ink2);margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+/* ---------- ideas ---------- */
+.ideas-cols{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));gap:16px;align-items:start}
+@media (max-width:900px){.ideas-cols{grid-template-columns:1fr}}
+.fcol{border-radius:var(--radius);background:var(--panel);border:1px solid var(--line);overflow:hidden}
+.fcol-h{padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);color:var(--ink)!important;background:var(--panel2)!important;position:relative}
+.fcol-h::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--fc)}
+.fcol-h h3{font-size:19px;flex:1;font-weight:800}
+.fcol-h .cnt{font-weight:800;font-size:12px;background:rgba(255,255,255,.06);padding:2px 9px;border-radius:999px;color:var(--ink2)}
+.fcol-h .icon-btn{color:var(--mint)!important;font-size:18px}
+.fcol-b{padding:12px}
+.tgroup{margin-bottom:14px}
+.tgroup .tg-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:var(--mint);margin:4px 2px 8px;display:flex;justify-content:space-between}
+.tgroup .tg-h span:last-child{color:var(--ink3)}
+.icard{background:var(--field);border:1px solid var(--line);border-radius:14px;margin-bottom:8px;cursor:pointer;overflow:hidden;display:flex}
+.icard:hover{border-color:rgba(95,209,167,.4)}
+.icard .ib{padding:11px 13px;min-width:0;flex:1}
+.icard .it{font-weight:700;line-height:1.3}
+.icard .id{font-size:12.5px;color:var(--ink2);margin-top:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.icard .im{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.icard img{width:68px;object-fit:cover;flex:none;background:var(--panel2)}
+.icard.done{opacity:.55}
+/* ---------- library ---------- */
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+@media (max-width:480px){.lib-grid{grid-template-columns:1fr 1fr;gap:10px}}
+.lcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer;display:flex;flex-direction:column}
+.lcard:hover{border-color:rgba(95,209,167,.4)}
+.lthumb{position:relative;aspect-ratio:4/5;max-width:100%;background:var(--panel2);overflow:hidden}
+.lthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.lthumb .noimg{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink3);font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+.lthumb .fbadge{position:absolute;left:9px;top:9px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:800}
+.lthumb .ready{position:absolute;right:9px;top:9px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:800;background:var(--warn);color:#241600}
+.lbody{padding:11px 13px 13px}
+.lbody .lt{font-weight:700;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.lbody .lm{font-size:12px;color:var(--ink2);margin-top:5px}
+.lbody .lm b{color:var(--mint)}
+.lbody .lc{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+/* ---------- review ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.kpi{padding:14px 16px}
+.kpi .kl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:var(--mint)}
+.kpi .kv{font-family:var(--head);font-size:30px;font-weight:800;line-height:1.1;margin-top:4px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tbl-wrap{overflow-x:auto}
+table.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.16em;color:var(--ink3);padding:12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--panel2)}
+.tbl th.sortable{cursor:pointer;user-select:none}
+.tbl th.sortable:hover,.tbl th.sorted{color:var(--mint)}
+.tbl td{padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.num,.tbl th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl td.ttl{white-space:normal;min-width:200px;font-weight:700}
+.tbl tr.click{cursor:pointer} .tbl tr.click:hover td{background:rgba(95,209,167,.05)}
+.na{color:var(--ink3)}
+.due{border-color:rgba(240,184,90,.4);background:linear-gradient(90deg,rgba(240,184,90,.08),transparent 60%),var(--panel)}
+.due b{color:var(--warn)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.filters>*{width:auto;min-width:130px;flex:1 1 130px;max-width:240px}
+.filters label.chk{display:flex;align-items:center;gap:7px;font-weight:600;font-size:13px;flex:0 0 auto;min-width:0;color:var(--ink2)}
+/* ---------- weekly / plan / reflections ---------- */
+.wk-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;align-items:start}
+@media (max-width:900px){.wk-grid{grid-template-columns:1fr}}
+.q{font-family:var(--head);font-size:20px;font-weight:800;letter-spacing:-.01em;margin-bottom:10px;display:flex;gap:10px;align-items:center}
+.q b{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--mintSoft);border:1px solid rgba(95,209,167,.4);color:var(--mint);font-size:12.5px;flex:none}
+.wk-item{display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.wk-item:last-child{border-bottom:0}
+.wk-item .sw{width:4px;align-self:stretch;border-radius:3px;flex:none}
+.plan-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+@media (max-width:900px){.plan-cols{grid-template-columns:1fr}}
+.plan-cols h3{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.2em;color:var(--mint)}
+.pnote{background:var(--field);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px}
+.pnote.done .ptext{text-decoration:line-through;color:var(--ink3)}
+.pnote .ptext{white-space:pre-wrap;word-break:break-word}
+.pnote .pmeta{display:flex;align-items:center;gap:2px;margin-top:8px;font-size:11.5px;color:var(--ink3)}
+.pnote .pmeta .sp{flex:1}
+.check-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.check-item:last-of-type{border-bottom:0}
+.check-item input[type=checkbox]{width:18px;height:18px;flex:none}
+.check-item .ct{flex:1;min-width:0}
+.check-item.done .ct{color:var(--ink3);text-decoration:line-through}
+.refl{display:flex;gap:13px;padding:16px;margin-bottom:10px}
+.refl .rb{flex:1;min-width:0}
+.refl .rh{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.refl .rh b{font-size:14px}
+.refl .rt{white-space:pre-wrap;word-break:break-word;margin-top:6px;color:var(--ink)}
+/* ---------- settings ---------- */
+.set-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.set-grid{grid-template-columns:1fr}}
+.fedit{border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:10px;background:var(--field)}
+.fedit .fh{display:flex;gap:8px;align-items:center}
+.fedit input[type=color]{width:42px;height:40px;padding:3px;border:1px solid var(--line2);border-radius:12px;background:var(--panel2);flex:none;cursor:pointer}
+.trow{display:flex;gap:6px;align-items:center;margin-top:7px}
+/* ---------- modal ---------- */
+.overlay{position:fixed;inset:0;background:rgba(2,6,7,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px}
+.modal{width:100%;max-width:700px;background:var(--panel);border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px var(--line2)}
+.modal.sm{max-width:430px}
+.mh{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.mh h3{flex:1;font-size:22px;font-weight:800}
+.mb{padding:18px}
+.mf{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--line);flex-wrap:wrap;position:sticky;bottom:0;background:var(--panel);border-radius:0 0 22px 22px}
+.mf .sp{flex:1}
+@media (max-width:560px){.overlay{padding:0}.modal{border-radius:0;min-height:100%;box-shadow:none}.mh{padding-top:calc(16px + env(safe-area-inset-top,0px))}.mf{border-radius:0;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}}
+.imgfield{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.imgfield .prev{width:86px;height:106px;border-radius:12px;border:1px dashed var(--line2);overflow:hidden;display:grid;place-items:center;color:var(--ink3);font-size:11px;text-align:center;background:var(--field);flex:none}
+.imgfield .prev img{width:100%;height:100%;object-fit:cover;cursor:zoom-in}
+.imgfield.req .prev{border-color:var(--danger);color:var(--danger)}
+.gallery{display:flex;gap:8px;flex-wrap:wrap}
+.gimg{position:relative;width:94px;height:94px;border-radius:12px;overflow:hidden;border:1px solid var(--line2);background:var(--field)}
+.gimg img{width:100%;height:100%;object-fit:cover;cursor:zoom-in}
+.gimg .gact{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:4px}
+.gimg .gact a,.gimg .gact button{color:#fff;background:rgba(0,0,0,.45);border:0;border-radius:6px;font-size:11px;padding:2px 7px;cursor:pointer;text-decoration:none}
+.upload-btn{position:relative;overflow:hidden}
+.upload-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.stats-plat{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;background:var(--field)}
+.stats-plat h5{margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:var(--mint)}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
+.stats-grid label{font-size:11px;font-weight:600;color:var(--ink2);display:block;margin-bottom:4px}
+.stats-grid input{font-variant-numeric:tabular-nums}
+.thread{margin-top:20px;border-top:1px solid var(--line);padding-top:16px}
+.cmt{display:flex;gap:10px;margin-bottom:10px}
+.cmt .cb{flex:1;min-width:0;background:var(--field);border:1px solid var(--line);border-radius:14px;padding:9px 12px}
+.cmt .ch{display:flex;gap:6px;align-items:baseline;font-size:12px}
+.cmt .ct{white-space:pre-wrap;word-break:break-word;margin-top:3px}
+.comment-add{display:flex;gap:8px;align-items:flex-end}
+.comment-add textarea{min-height:42px}
+.lightbox{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.92);display:grid;place-items:center;padding:20px;cursor:zoom-out}
+.lightbox img{max-width:100%;max-height:100%;border-radius:12px}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel2);color:var(--ink);border:1px solid rgba(95,209,167,.45);padding:11px 18px;border-radius:14px;font-weight:700;z-index:90;box-shadow:0 10px 40px rgba(0,0,0,.5),0 0 20px rgba(95,209,167,.15);max-width:90vw}
+.toast.err{border-color:rgba(255,122,107,.6);color:var(--danger)}
+.err-msg{color:var(--danger);font-weight:700;font-size:13px;margin-top:6px}
+/* ---------- hub links + separate pages ---------- */
+nav.tabs .tab-gap{flex:1;min-width:16px}
+nav.tabs .site-link{color:var(--ink2);font-weight:600}
+nav.tabs .site-link span{color:var(--mint);margin-left:2px}
+nav.tabs .site-link:hover{color:var(--mint)}
+nav.tabs .tab-gap+.site-link::before{display:none}
+header.sub-site{background:rgba(10,24,22,.9);border-bottom-color:rgba(95,209,167,.25)}
+header.sub-site .brand .lbl{font-size:14px;letter-spacing:.24em}
+.back{border:1px solid var(--line2);background:var(--panel2);color:var(--mint);width:38px;height:38px;border-radius:12px;font-size:18px;font-weight:800;cursor:pointer;flex:none;display:grid;place-items:center}
+.back:hover{border-color:rgba(95,209,167,.5)}
+@media (max-width:480px){header.sub-site .brand .div,header.sub-site .brand .lbl{display:inline-block}header.sub-site .brand .wm{display:none}}
+/* ---------- collapsible sections ---------- */
+details.sec{margin-bottom:14px}
+.cal-wrap>details.sec,.ideas-cols>details.sec,.plan-cols>details.sec{margin-bottom:0}
+details.sec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:15px 18px;user-select:none;-webkit-tap-highlight-color:transparent}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary h3{flex:0 1 auto;min-width:0;font-size:18px;font-weight:800}
+details.sec>summary .q{margin:0}
+details.sec>summary .btn,details.sec>summary .icon-btn.add{margin-left:auto}
+details.sec>summary .btn+.chev,details.sec>summary .icon-btn.add+.chev{margin-left:4px}
+.cnt{font-weight:800;font-size:12px;background:rgba(255,255,255,.06);padding:2px 9px;border-radius:999px;color:var(--ink2);white-space:nowrap}
+.cnt.warn{background:rgba(240,184,90,.15);color:var(--warn)}
+.chev{width:28px;height:28px;border-radius:50%;border:1px solid var(--line2);flex:none;display:grid;place-items:center;margin-left:auto;transition:background .15s}
+.chev::before{content:"";width:7px;height:7px;border-right:2px solid var(--mint);border-bottom:2px solid var(--mint);transform:translateY(-2px) rotate(45deg);transition:transform .2s}
+details.sec:not([open])>summary .chev::before{transform:translateX(-1px) rotate(-45deg)}
+details.sec>summary:hover .chev{background:var(--mintSoft)}
+details.sec[open]>summary{border-bottom:1px solid var(--line)}
+details.sec>.sec-b{padding:16px 18px 18px}
+details.sec.flush>.sec-b{padding:0 0 14px}
+details.sec.flush .tbl th{position:static}
+details.sec.sub{margin:0 0 8px;border:0;background:transparent}
+details.sec.sub>summary{padding:8px 4px;border-bottom:0!important}
+details.sec.sub>.sec-b{padding:2px 0 4px}
+details.sec.sub .chev{width:22px;height:22px}
+details.sec.sub .chev::before{width:6px;height:6px}
+.tg-t{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:var(--mint)}
+.tg-n{font-size:11px;font-weight:700;color:var(--ink3)}
+.fdot{width:10px;height:10px;border-radius:50%;flex:none;box-shadow:0 0 10px currentColor}
+details.fcol,details.fsec{box-shadow:inset 0 3px 0 var(--fc)}
+details.fcol>.sec-b{padding:12px}
+details.side>summary h3{font-size:19px}
+details.due>summary h3{color:var(--warn)}
+details.due .btn{white-space:normal;max-width:100%;text-align:left}
+.kpis{margin-bottom:0}
+.kpi{background:var(--field);border:1px solid var(--line);border-radius:14px}
+.lthumb .weeks{position:absolute;left:9px;bottom:9px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:800;background:rgba(4,12,10,.78);color:var(--mint);border:1px solid rgba(95,209,167,.35)}
+.lbody .lk{display:inline-block;margin-top:8px;font-size:12.5px;font-weight:700;color:var(--mint);text-decoration:none}
+.lbody .lk:hover{text-decoration:underline}
+/* ---------- library rows ---------- */
+.lrows{display:flex;flex-direction:column;gap:6px}
+details.lrow{background:var(--field);border:1px solid var(--line);border-radius:12px;box-shadow:inset 3px 0 0 var(--fc);overflow:hidden}
+details.lrow>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto auto 26px;align-items:center;gap:14px;padding:10px 12px 10px 16px;-webkit-tap-highlight-color:transparent}
+details.lrow>summary::-webkit-details-marker{display:none}
+details.lrow>summary:hover{background:rgba(95,209,167,.04)}
+.lr-t{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lr-m{font-size:12px;color:var(--mint);font-weight:700;white-space:nowrap}
+.lr-m .rdy{color:var(--warn)}
+.lr-s{display:flex;gap:12px;font-size:12px;color:var(--ink3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.lr-s b{color:var(--ink);font-weight:700}
+details.lrow .chev{width:24px;height:24px;margin-left:0}
+details.lrow .chev::before{width:6px;height:6px}
+details.lrow:not([open])>summary .chev::before{transform:translateX(-1px) rotate(-45deg)}
+details.lrow[open]{border-color:rgba(95,209,167,.3)}
+details.lrow[open]>summary{border-bottom:1px solid var(--line)}
+.lr-b{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;padding:14px 16px 16px}
+.lr-img{aspect-ratio:9/16;max-width:100%;border-radius:10px;overflow:hidden;background:var(--panel2);position:relative}
+.lr-img img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.lr-img .noimg{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink3);font-size:11px;text-align:center;padding:6px}
+.lr-d{display:flex;flex-direction:column;gap:12px;min-width:0}
+.lr-dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0}
+.lr-dl dt{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--ink3)}
+.lr-dl dd{margin:3px 0 0;font-weight:700}
+.lr-d .chip{white-space:normal}
+a.btn{text-decoration:none}
+.tbl.mini{font-size:12px}.tbl.mini th,.tbl.mini td{padding:7px 9px}
+@media (max-width:640px){
+  details.lrow>summary{grid-template-columns:minmax(0,1fr) 24px;grid-template-areas:"t c" "m c" "s c";row-gap:3px;gap:4px 10px}
+  .lr-t{grid-area:t;white-space:normal}.lr-m{grid-area:m}.lr-s{grid-area:s;gap:10px}details.lrow .chev{grid-area:c}
+  .lr-b{grid-template-columns:1fr;gap:12px;padding:12px}
+  .lr-img{width:150px}
+  .lr-dl{grid-template-columns:1fr 1fr}
+}
+/* ---------- repost, best performers, hooks ---------- */
+.chk-line{display:flex;align-items:center;gap:10px;font-weight:700;cursor:pointer}
+.chk-line input{width:18px;height:18px;flex:none}
+.repost-box{border:1px solid var(--line2);border-radius:14px;padding:12px 14px;background:var(--field)}
+.repost-box #pe-orig-wrap{margin-top:12px}
+details.lrow[open] .lr-t{white-space:normal;overflow:visible}
+.lr-m .rp{color:var(--ink2);margin-left:6px}
+.lr-dl{grid-template-columns:repeat(4,minmax(0,1fr))}
+.best{display:flex;flex-direction:column;gap:8px}
+.best-row{display:grid;grid-template-columns:28px 46px minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 12px 8px 8px;border:1px solid var(--line);border-radius:12px;background:var(--field);cursor:pointer;text-align:left;width:100%;color:var(--ink)}
+.best-row:hover{border-color:rgba(95,209,167,.4)}
+.best-row .rk{font-weight:800;font-size:18px;color:var(--mint);text-align:center;font-variant-numeric:tabular-nums}
+.best-row .bt{width:46px;height:62px;border-radius:8px;overflow:hidden;background:var(--panel2)}
+.best-row .bt img{width:100%;height:100%;object-fit:cover;display:block}
+.best-row .bn{font-weight:700;line-height:1.3}
+.best-row .bs{font-size:12px;color:var(--ink3);margin-top:3px;font-variant-numeric:tabular-nums}
+.best-row .bv{text-align:right}
+.best-row .bv b{display:block;font-size:22px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.best-row .bv span{font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--mint);font-weight:700}
+.best-head{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.best-head select{width:auto;min-width:160px}
+ol.hooks{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+@media (max-width:700px){ol.hooks{grid-template-columns:1fr}}
+.hook{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:1px solid var(--line);background:var(--field);border-radius:10px;padding:9px 11px;cursor:pointer;color:var(--ink);font-size:13.5px;line-height:1.35}
+.hook:hover{border-color:rgba(95,209,167,.45)}
+.hook .hn{flex:none;min-width:30px;font-weight:800;color:var(--mint);font-variant-numeric:tabular-nums}
+details.hookbank{margin-bottom:16px}
+@media (max-width:640px){.best-row{grid-template-columns:22px 40px minmax(0,1fr)}.best-row .bv{grid-column:3;text-align:left}.best-row .bv b{display:inline;font-size:16px;margin-right:6px}}
+/* ---------- login ---------- */
+.login{max-width:400px;margin:12vh auto;padding:30px}
+.login h1{font-size:30px;letter-spacing:.16em;font-weight:800}
+.loading{display:grid;place-items:center;min-height:50vh;color:var(--ink3);letter-spacing:.2em;text-transform:uppercase;font-size:12px;font-weight:700}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Loading…</div></div>
+<div id="modal-root"></div>
+<script>window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || null;</script>
+<script src="firebase-config.js" onerror="void 0"></script>
+<script type="module">
+/* =========================================================================
+   VERUS Content Hub — single-page app
+   Data: Firebase (Firestore + Auth) when firebase-config.js is filled in,
+   otherwise a local "demo mode" that saves only in this browser.
+   ========================================================================= */
+
+// ---------- constants ----------
+const PLATFORMS = [
+  {id:'ig',  name:'Instagram',      short:'IG',     metrics:['views','comments','shares','saves','follows','avgWatch']},
+  {id:'fb',  name:'Facebook',       short:'FB',     metrics:['views','comments','shares','saves','follows','avgWatch']},
+  {id:'tt',  name:'TikTok',         short:'TT',     metrics:['views','shares','saves','comments','avgWatch','follows']},
+  {id:'ytl', name:'YouTube (Full)', short:'YT',     metrics:['views','avgWatch','follows']},
+  {id:'yts', name:'YouTube Shorts', short:'Shorts', metrics:['views','avgWatch','follows']},
+];
+const METRIC_LABEL = {views:'Views',comments:'Comments',shares:'Shares',saves:'Saves',follows:'Follows',avgWatch:'Avg watch'};
+const metricLabel = (pl,m) => (m==='follows' && pl.startsWith('yt')) ? 'Subscribers' : METRIC_LABEL[m];
+const REVIEW_COLS = ['views','comments','shares','saves','follows','avgWatch'];
+const STATUSES = ['To film','Edited','Scheduled','Posted'];
+const STATUS_ICON = {'To film':'🎬','Edited':'✂️','Scheduled':'⏰','Posted':'✅'};
+const STATUS_CLS = {'To film':'s-tofilm','Edited':'s-edited','Scheduled':'s-sched','Posted':'s-posted'};
+const RECYCLE = {'':'Not decided', repost:'Repost as is', remix:'Remix / re-edit', combine:'Combine with others', retire:'Retire'};
+const HORIZONS = [['current','Current plan'],['medium','Medium term'],['long','Long term']];
+const plat = id => PLATFORMS.find(p=>p.id===id);
+const setHash = h => { try { history.replaceState(null,'','#'+h); } catch {} };
+let OPEN = {}; try { OPEN = JSON.parse(localStorage.getItem('verus_sections') || '{}') || {}; } catch {}
+const isOpen = (id, def=true) => Object.prototype.hasOwnProperty.call(OPEN, id) ? OPEN[id] : def;
+function sec(id, head, body, {cls='', def=true, sub=false, style=''}={}){
+  return `<details class="sec ${sub?'sub':'card'} ${cls}" data-sec="${esc(id)}" ${style?`style="${style}"`:''} ${isOpen(id,def)?'open':''}><summary class="sec-h">${head}<span class="chev" aria-hidden="true"></span></summary><div class="sec-b">${body}</div></details>`;
+}
+const allToggle = () => `<button class="btn sm ghost" data-act="secAll">Collapse all</button>`;
+document.addEventListener('toggle', e => { const d = e.target;
+  if (d && d.dataset && d.dataset.row) { if (d.open) { openRows.add(d.dataset.row); $$('img[data-limg]', d).forEach(im => { im.dataset.img = im.dataset.limg; delete im.dataset.limg; }); hydrate(d); } else openRows.delete(d.dataset.row); return; }
+  if (d && d.dataset && d.dataset.sec) { OPEN[d.dataset.sec] = d.open; try { localStorage.setItem('verus_sections', JSON.stringify(OPEN)); } catch {} syncAllLabel(); } }, true);
+function syncAllLabel(){ const b = document.querySelector('#view [data-act="secAll"]'); if (!b) return; const ds = [...document.querySelectorAll('#view details.sec:not(.sub)')]; b.textContent = ds.some(d=>d.open) ? 'Collapse all' : 'Expand all'; }
+const halfWeeks = s => { const d = daysSince(s); if (d==null) return ''; if (d<0) return 'Upcoming'; const w = Math.floor(d/3.5)/2; if (w===0) return 'This week'; const whole = Math.floor(w); return `${whole||''}${w%1?'½':''} week${w>1?'s':''} ago`; };
+
+// ---------- helpers ----------
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+const pad = n => String(n).padStart(2,'0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseISO = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
+const todayISO = () => iso(new Date());
+const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const mondayOf = d => { const x = new Date(d.getFullYear(),d.getMonth(),d.getDate()); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x; };
+const daysSince = s => s ? Math.round((parseISO(todayISO()) - parseISO(s))/864e5) : null;
+const weeksSince = s => { const d = daysSince(s); return d==null ? null : Math.floor(d/7); };
+const agoText = s => { const d = daysSince(s); if (d==null) return 'No date'; if (d<0) return `in ${-d} day${d===-1?'':'s'}`; if (d<7) return d===0?'today':`${d} day${d===1?'':'s'} ago`; const w=Math.floor(d/7); return `${w} week${w===1?'':'s'} ago`; };
+const fmtDay = s => parseISO(s).toLocaleDateString('en-IE',{weekday:'short',day:'numeric',month:'short'});
+const fmtDate = s => parseISO(s).toLocaleDateString('en-IE',{day:'numeric',month:'short',year:'numeric'});
+const fmtDateTime = ts => new Date(ts).toLocaleString('en-IE',{weekday:'short',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+const parseWatch = v => { v = String(v ?? '').trim(); if (!v) return null; if (v.includes(':')) { const p = v.split(':').map(Number); if (p.some(isNaN)) return null; return p.reduce((a,b)=>a*60+b,0); } const n = parseFloat(v); return isNaN(n) ? null : n; };
+const fmtWatch = s => { if (s==null || s==='') return ''; s = Math.round(s); return `${Math.floor(s/60)}:${pad(s%60)}`; };
+const num = v => { if (v==='' || v==null) return null; const n = Number(String(v).replace(/[, ]/g,'')); return isNaN(n) ? null : n; };
+const fmtNum = n => n==null ? '—' : n>=100000 ? Math.round(n/1000)+'k' : n>=10000 ? (n/1000).toFixed(1)+'k' : Math.round(n).toLocaleString('en-IE');
+const clean = o => JSON.parse(JSON.stringify(o, (k,v)=> v===undefined ? null : v));
+const textOn = hex => { const h = (hex||'#888').replace('#',''); const f = h.length===3 ? h.split('').map(c=>c+c).join('') : h; const [r,g,b] = [0,2,4].map(i=>parseInt(f.slice(i,i+2),16)/255); const L = 0.2126*r+0.7152*g+0.0722*b; return L > 0.6 ? '#151515' : '#ffffff'; };
+const initials = n => (n||'?').trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+function toast(msg, kind='') { const t = document.createElement('div'); t.className = 'toast '+kind; t.textContent = msg; document.body.appendChild(t); setTimeout(()=>t.remove(), kind==='err'?4500:2200); }
+function download(name, content, type='text/plain') { const a = document.createElement('a'); a.href = typeof content === 'string' && content.startsWith('data:') ? content : URL.createObjectURL(new Blob([content],{type})); a.download = name; document.body.appendChild(a); a.click(); setTimeout(()=>a.remove(),100); }
+const csv = rows => rows.map(r=>r.map(c=>{ c = c==null ? '' : String(c); return /[",\n]/.test(c) ? `"${c.replace(/"/g,'""')}"` : c; }).join(',')).join('\n');
+
+// ---------- default data ----------
+function defaultSettings() {
+  return {
+    funnels: [
+      {id:'f_top', name:'Top · Awareness', color:'#F0A35E', types:[
+        {id:'t_myth',name:'Myth bust'},{id:'t_react',name:'Daniel reacts'},{id:'t_take',name:'Hot take / mistake'},
+        {id:'t_rate',name:'Rating / tier list'},{id:'t_trend',name:'Trend / relatable'},{id:'t_recipe',name:'Quick recipe / food hack'}]},
+      {id:'f_mid', name:'Middle · Interest', color:'#4E9BEA', types:[
+        {id:'t_nutri',name:'Nutrition explainer'},{id:'t_mind',name:'Mindset & teamwork'},{id:'t_series',name:'Series episode'},{id:'t_carousel',name:'Carousel guide'},{id:'t_yt',name:'YouTube long-form'},
+        {id:'t_pod',name:'Podcast clip'},{id:'t_qa',name:'Q&A / comment reply'},{id:'t_story',name:'Elite sport insight'},{id:'t_collab',name:'Collab'}]},
+      {id:'f_bot', name:'Bottom · Application', color:'#3FC495', types:[
+        {id:'t_client',name:'Client story / proof'},{id:'t_fix',name:'Fix my diet / audit'},{id:'t_challenge',name:'Challenge / quiz'},
+        {id:'t_live',name:'Live / Q&A'},{id:'t_objection',name:'Objection buster'},{id:'t_explainer',name:'Gameplan explainer'},
+        {id:'t_testimonial',name:'Testimonial'},{id:'t_offer',name:'Offer / intake'}]},
+    ],
+    members: [{email:'miloherbst7@gmail.com', name:'Milo'},{email:'', name:'Daniel'}],
+    repostWeeks: 12,
+    statsDays: 7,
+    checklist: [
+      'TikTok bio link correct','Instagram bio link correct','Facebook page link and About correct','YouTube channel links and banner correct',
+      'Linktree: every link works','Story highlights up to date (Start here, Results, Gameplan)','Pinned posts are current on every platform',
+      'Recipe framework autoresponder delivering','Profile photos and bios consistent across platforms'
+    ].map(text=>({id:uid(), text, done:false, checkedAt:null, checkedBy:''})),
+  };
+}
+const PERMISSION_NOTE = 'Needs written permission before posting (parental consent if under 18).';
+const SEED_IDEAS = [
+  ['f_top','t_take','Stop doing this the night before a match','Common pre-game mistakes athletes make: late heavy meals, skipping carbs, too much caffeine, poor sleep routine.'],
+  ['f_top','t_rate',"Rating pro athletes' pre-game meals",'Stitch/react to famous pre-game meals and score them out of 10 with the reasoning.'],
+  ['f_top','t_take',"3 things elite athletes do before bed that you don't",'Sleep routine, evening nutrition and recovery habits.'],
+  ['f_top','t_myth','Myth: carbs at night make you fat','Bust the myth with the evidence, then one practical swap.'],
+  ['f_top','t_rate','Supplement tier list: creatine, greens, collagen, pre-workout','Rank popular supplements by evidence. Great for comments and debate.'],
+  ['f_top','t_take',"What one bad night's sleep does to your performance",'Reaction time, decision making, injury risk. Sleep pillar.'],
+  ['f_top','t_myth','Ice baths: worth it or overrated?','The honest answer: when they help, when they blunt adaptation. Recovery pillar.'],
+  ['f_top','t_recipe','Supermarket walk: athlete swaps aisle by aisle','Film in a supermarket, swap common picks for better athlete options.'],
+  ['f_top','t_rate','Guess the protein: rating Irish meal deals','Meal deals and deli rolls: guess the protein, Daniel rates them.'],
+  ['f_top','t_react',"Reacting to influencer 'what I eat in a day' videos",'Stitch format. Keep it constructive, not mean.'],
+  ['f_top','t_trend','Things nobody told you at 16 about being an athlete','Relatable, nostalgic hook for young athletes and parents.'],
+  ['f_top','t_trend','The team night out: how to recover the next day','Practical, non-judgemental recovery guide. Very shareable in team group chats.'],
+  ['f_top','t_recipe','Eat like a pro on €30 a week','Student budget shop and meals.'],
+  ['f_top','t_take',"Why you play worse when you're nervous",'Mindset meets gut: nerves, digestion and pre-match eating.'],
+  ['f_top','t_trend','Rapid-fire this or that: Daniel picks','Quick 2-second answers. Easy to film in batches.'],
+  ['f_mid','t_series','Elite Habits: one habit per episode','Recurring series. One habit each episode across nutrition, sleep, recovery, mindset, training.','Elite Habits'],
+  ['f_mid','t_series',"Build an Athlete: follow one athlete's 90 days",'Document an athlete through the Gameplan in real time. Doubles as future proof content.','Build an Athlete',PERMISSION_NOTE],
+  ['f_mid','t_series',"Explain it like I'm 15",'Simple explainers for young athletes and their parents.',"Explain it like I'm 15"],
+  ['f_mid','t_qa','Sunday Q&A: answering your comments','Weekly reply-to-comment videos. Feeds comment growth.','Sunday Q&A'],
+  ['f_mid','t_series','Recovery Kitchen: quick recovery meals','Saveable recipes for after training and matches.','Recovery Kitchen'],
+  ['f_mid','t_carousel','Match-day fuel timeline: 48 hours to the final whistle','Carousel: what to eat and when, slide by slide.'],
+  ['f_mid','t_carousel','The athlete sleep checklist','Carousel checklist. Highly saveable.'],
+  ['f_mid','t_carousel','Evidence-based supplement guide','What is worth it and what is not.'],
+  ['f_mid','t_yt','Full day of eating: county / rugby player','YouTube long-form. Cut 5 to 8 reels from it.'],
+  ['f_mid','t_yt','The 24-hour post-match recovery protocol','YouTube long-form deep dive.'],
+  ['f_mid','t_yt','How to eat around double sessions','Gym plus pitch days. Training pillar.'],
+  ['f_mid','t_carousel','Nutrition for injury recovery','How to get back faster.'],
+  ['f_mid','t_story','Pre-game confidence routines elite players use','Mindset pillar, drawing on what Daniel has seen in elite sport.'],
+  ['f_mid','t_pod','Podcast clips with athlete and coach guests','Best moments from the podcast as reels.'],
+  ['f_mid','t_collab','Collab reels with athletes, coaches and clubs','Borrow new audiences through collab posts.'],
+  ['f_bot','t_fix','Fix my diet: rebuild a follower\'s day of eating','Followers submit a day of eating; Daniel rebuilds it on camera.','Fix My Diet'],
+  ['f_bot','t_client','Client transformation mini-doc','Struggle, plan, result.','',PERMISSION_NOTE],
+  ['f_bot','t_client','Day 1 vs Day 90','Side-by-sides on performance, energy and injuries, not just looks.','',PERMISSION_NOTE],
+  ['f_bot','t_challenge','Free 7-day Elite Habits challenge','Ends with the Gameplan offer.'],
+  ['f_bot','t_live','Monthly Fuel Clinic (Instagram Live)','Open Q&A that closes with intake details.','Fuel Clinic'],
+  ['f_bot','t_challenge','Would you pass the elite athlete test?','Quiz reel; comment your score to get a plan.'],
+  ['f_bot','t_objection',"\"I'm not good enough to need a nutritionist\"",'Daniel speaking straight to camera.'],
+  ['f_bot','t_client','Parent story: the 17-year-old who kept getting injured','Aimed at parents of young athletes.','',PERMISSION_NOTE],
+  ['f_bot','t_explainer','Behind the scenes of a consult call','What a first call actually looks like.','',PERMISSION_NOTE],
+  ['f_bot','t_testimonial','The message that made my week','Reacting to client texts or voice notes.','',PERMISSION_NOTE],
+  ['f_bot','t_testimonial','Coach testimonials','Coaches on the difference in their players.','',PERMISSION_NOTE],
+  ['f_bot','t_explainer',"What's inside the 90-Day Gameplan",'Walkthrough of what clients actually get.'],
+  ['f_bot','t_fix',"Live client audit (anonymised)","Daniel reviews an anonymised client's week.",'',PERMISSION_NOTE],
+  ['f_bot','t_live','Ask me anything about working with us','Story Q&A sticker, then reshare the answers.'],
+  ['f_bot','t_offer','Intake reveal: limited January spots','Comment GAMEPLAN, with countdown Stories.'],
+];
+const SEED_PLANS = [
+  ['current','Run the weekly process: Monday slate, Wednesday shoot, Friday 10-min review'],
+  ['current','Fix the TikTok bio link and audit every bio link'],
+  ['current','Test two posting time slots for 4 weeks, then lock in the winner'],
+  ['current',"Add \"What content brought you to us?\" to the VERUS application form"],
+  ['medium','Start YouTube long-form every 2 weeks, cutting reels and carousels from each'],
+  ['medium','Audit the last 6–12 months of content into the Library and decide each one\'s fate'],
+  ['medium','Launch the Elite Habits series'],
+  ['long','Monthly Fuel Clinic Instagram Live'],
+  ['long','7-day Elite Habits challenge leading into a Gameplan intake'],
+  ['long','Regular collabs with clubs, coaches and athletes'],
+];
+
+// ---------- image compression ----------
+function compressImage(file, max, quality) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file); const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      let q = quality, out = c.toDataURL('image/jpeg', q);
+      while (out.length > 850000 && q > 0.35) { q -= 0.1; out = c.toDataURL('image/jpeg', q); }
+      res(out);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Could not read that image')); };
+    img.src = url;
+  });
+}
+
+// ---------- stores ----------
+const COLLS = ['posts','ideas','plans','reflections','comments','weekly'];
+
+const idb = {
+  _db:null, mem:new Map(),
+  open(){ return this._db ??= new Promise((res,rej)=>{ try{ const r = indexedDB.open('verus_hub_demo_img',1); r.onupgradeneeded=()=>r.result.createObjectStore('img'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);}catch(e){rej(e)} }); },
+  async tx(mode, fn){ const db = await this.open(); return new Promise((res,rej)=>{ const t = db.transaction('img',mode); const r = fn(t.objectStore('img')); t.oncomplete=()=>res(r?.result); t.onerror=()=>rej(t.error); }); },
+  async get(k){ try{ return await this.tx('readonly',s=>s.get(k)) ?? null; }catch{ return this.mem.get(k) ?? null; } },
+  async put(k,v){ try{ await this.tx('readwrite',s=>s.put(v,k)); }catch{ this.mem.set(k,v); } },
+  async del(k){ try{ await this.tx('readwrite',s=>s.delete(k)); }catch{ this.mem.delete(k); } },
+};
+
+class LocalStore {
+  constructor(){
+    this.mode = 'demo'; this.key = 'verus_hub_v2'; let d = null;
+    try { d = JSON.parse(localStorage.getItem(this.key)); } catch {}
+    this.d = d || {settings:null}; COLLS.forEach(c => this.d[c] ??= {});
+    this.subs = {};
+  }
+  persist(){ try { localStorage.setItem(this.key, JSON.stringify(this.d)); } catch { toast('Browser storage is full or blocked: demo changes may not be kept','err'); } }
+  snapshot(c){ return c==='settings' ? this.d.settings : Object.entries(this.d[c]).map(([id,v])=>({id,...v})); }
+  emit(c){ (this.subs[c]||[]).forEach(cb => cb(this.snapshot(c), {fromCache:false})); }
+  subscribe(c, cb){ (this.subs[c] ??= []).push(cb); setTimeout(()=>cb(this.snapshot(c),{fromCache:false}),0); }
+  async add(c,o){ const id = uid(); this.d[c][id] = clean(o); this.persist(); this.emit(c); return id; }
+  async set(c,id,o){ this.d[c][id] = clean(o); this.persist(); this.emit(c); }
+  async update(c,id,p){ if(!this.d[c][id]) return; this.d[c][id] = {...this.d[c][id], ...clean(p)}; this.persist(); this.emit(c); }
+  async remove(c,id){ delete this.d[c][id]; this.persist(); this.emit(c); }
+  async setSettings(s){ this.d.settings = clean(s); this.persist(); this.emit('settings'); }
+  async putImage(id,data){ await idb.put(id,data); }
+  async getImage(id){ return idb.get(id); }
+  async deleteImage(id){ await idb.del(id); }
+  reset(){ try{ localStorage.removeItem(this.key); indexedDB.deleteDatabase('verus_hub_demo_img'); }catch{} location.reload(); }
+}
+
+class FirebaseStore {
+  constructor(fb){ this.mode='firebase'; this.fb = fb; }
+  subscribe(c, cb){
+    const {fs, db} = this.fb;
+    const onErr = e => { console.error(e); if (e.code==='permission-denied') showDenied(); else toast('Sync error: '+e.message,'err'); };
+    if (c==='settings') return fs.onSnapshot(fs.doc(db,'settings','main'), {includeMetadataChanges:false}, s => cb(s.exists()? s.data() : null, s.metadata), onErr);
+    return fs.onSnapshot(fs.collection(db,c), s => cb(s.docs.map(d=>({id:d.id,...d.data()})), s.metadata), onErr);
+  }
+  async add(c,o){ const id = uid(); await this.fb.fs.setDoc(this.fb.fs.doc(this.fb.db,c,id), clean(o)); return id; }
+  async set(c,id,o){ await this.fb.fs.setDoc(this.fb.fs.doc(this.fb.db,c,id), clean(o)); }
+  async update(c,id,p){ await this.fb.fs.updateDoc(this.fb.fs.doc(this.fb.db,c,id), clean(p)); }
+  async remove(c,id){ await this.fb.fs.deleteDoc(this.fb.fs.doc(this.fb.db,c,id)); }
+  async setSettings(s){ await this.fb.fs.setDoc(this.fb.fs.doc(this.fb.db,'settings','main'), clean(s)); }
+  async putImage(id,data){ await this.fb.fs.setDoc(this.fb.fs.doc(this.fb.db,'images',id), {data, t:Date.now()}); }
+  async getImage(id){ const s = await this.fb.fs.getDoc(this.fb.fs.doc(this.fb.db,'images',id)); return s.exists() ? s.data().data : null; }
+  async deleteImage(id){ try { await this.fb.fs.deleteDoc(this.fb.fs.doc(this.fb.db,'images',id)); } catch {} }
+}
+
+// ---------- app state ----------
+let store = null;
+const S = {
+  settings:null, posts:[], ideas:[], plans:[], reflections:[], comments:[], weekly:[],
+  me:null, view: (h => ({review:'stats'})[h] || (h && h in {calendar:1,ideas:1,stats:1,library:1,weekly:1,plan:1,reflections:1,settings:1} ? h : 'calendar'))(location.hash.slice(1)), loaded:new Set(),
+  cal:{ month: new Date(new Date().getFullYear(), new Date().getMonth(), 1), sel: todayISO() },
+  idf:{ q:'', series:'', showScheduled:false },
+  lf:{ funnel:'all', recycle:'all', ready:false, sort:'new', q:'' },
+  rv:{ platform:'all', funnel:'all', type:'all', from:'', to:'', sort:'views', dir:-1, best:'views' },
+  wk: iso(mondayOf(new Date())),
+  rf:{ author:'all', q:'' },
+};
+const funnelOf = id => S.settings?.funnels.find(f=>f.id===id) || {id:'', name:'Unassigned', color:'#9aa0a6', types:[]};
+const typeName = (fid,tid) => funnelOf(fid).types.find(t=>t.id===tid)?.name || '';
+const funnelLabel = (fid,tid) => { const t = typeName(fid,tid); return funnelOf(fid).name + (t ? ' · '+t : ''); };
+const fChip = (fid,tid) => { const f = funnelOf(fid); const t = typeName(fid,tid); return `<span class="chip"><span class="dot" style="background:${esc(f.color)}"></span>${esc(f.name)}${t?` · ${esc(t)}`:''}</span>`; };
+const platChips = arr => (arr||[]).map(id=>`<span class="chip">${esc(plat(id)?.short||id)}</span>`).join('');
+const isPosted = p => p.status==='Posted';
+const statsDue = p => isPosted(p) && p.source!=='manual' && p.date && daysSince(p.date) >= (S.settings?.statsDays ?? 7) && (p.platforms||[]).some(pl => p.stats?.[pl]?.views == null);
+const repostsOf = id => S.posts.filter(x => x.repostOf === id);
+const isRepostEntry = p => !!p.repostOf && S.posts.some(x => x.id === p.repostOf);
+const timesReposted = p => (p.repostsManual || 0) + repostsOf(p.id).filter(isPosted).length;
+const repostReady = p => !isRepostEntry(p) && (isPosted(p) || p.source==='manual') && !!lastDate(p) && weeksSince(lastDate(p)) >= (S.settings?.repostWeeks ?? 12) && p.recycle !== 'retire';
+const totalViews = p => (p.platforms||[]).reduce((a,pl)=>a+(p.stats?.[pl]?.views||0),0);
+const byCreated = (a,b) => (a.createdAt||0)-(b.createdAt||0);
+
+// ---------- image cache / hydration ----------
+const imgCache = new Map();
+function getImg(id){ if (!id) return Promise.resolve(null); if (!imgCache.has(id)) imgCache.set(id, store.getImage(id).catch(()=>null)); return imgCache.get(id); }
+document.addEventListener('click', e => { const im = e.target.closest('.lr-img img'); if (im) lightbox(im.dataset.full); });
+function hydrate(root=document){
+  $$('img[data-img]', root).forEach(async el => {
+    if (el.dataset.loaded === el.dataset.img) return; el.dataset.loaded = el.dataset.img;
+    const src = await getImg(el.dataset.img); if (src && el.dataset.img === el.dataset.loaded) el.src = src; else if (!src) el.style.visibility='hidden';
+  });
+}
+async function uploadImage(file){
+  const id = 'img_' + uid();
+  const [full, thumb] = await Promise.all([compressImage(file, 1600, 0.82), compressImage(file, 420, 0.72)]);
+  await Promise.all([store.putImage(id, full), store.putImage(id+'_t', thumb)]);
+  imgCache.set(id, Promise.resolve(full)); imgCache.set(id+'_t', Promise.resolve(thumb));
+  return id;
+}
+async function deleteImage(id){ if (!id) return; imgCache.delete(id); imgCache.delete(id+'_t'); await Promise.all([store.deleteImage(id), store.deleteImage(id+'_t')]); }
+const thumb = id => id ? id+'_t' : '';
+
+// ---------- rendering scheduler ----------
+let renderQueued = false, deferred = false;
+function requestRender(){
+  if (renderQueued) return; renderQueued = true;
+  requestAnimationFrame(() => {
+    renderQueued = false;
+    refreshThreads();
+    const a = document.activeElement, view = $('#view');
+    if (view && a && view.contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) { deferred = true; return; }
+    renderShell(); renderView();
+  });
+}
+document.addEventListener('focusout', e => { if (deferred && $('#view')?.contains(e.target)) { deferred = false; setTimeout(requestRender, 60); } });
+
+// ---------- shell ----------
+// Main hub tabs, plus three pages that open on their own (Library, Review, Settings)
+const HUB = [['calendar','Calendar'],['ideas','Ideas'],['stats','Stats']];
+const SITES = {
+  library: {title:'Library', views:[['library','Library']]},
+  review:  {title:'Review', views:[['weekly','Weekly'],['plan','Plan'],['reflections','Reflections']]},
+  settings:{title:'Settings', views:[['settings','Settings']]},
+};
+const siteOf = v => Object.keys(SITES).find(k => SITES[k].views.some(x=>x[0]===v)) || 'hub';
+let lastHub = 'calendar', lastReview = 'weekly';
+function renderShell(){
+  const app = $('#app'), site = siteOf(S.view);
+  if (site==='hub') lastHub = S.view; if (site==='review') lastReview = S.view;
+  if (!$('#view')) app.innerHTML = `<header class="top" id="hdr"></header><main id="view"></main>`;
+  const due = S.posts.filter(statsDue).length;
+  const banner = '';
+  const brand = label => `<div class="brand"><div class="wm"><b>VERUS</b><i>PERFORMANCE</i></div><span class="div"></span><span class="lbl">${label}</span></div>`;
+  let bar, tabs;
+  if (site==='hub') {
+    bar = brand('CONTENT HUB');
+    tabs = HUB.map(([k,l]) => `<button data-act="nav" data-v="${k}" class="${S.view===k?'on':''}">${l}${k==='stats'&&due?`<span class="badge">${due}</span>`:''}</button>`).join('')
+      + `<span class="tab-gap"></span>`
+      + Object.entries(SITES).map(([k,x]) => `<button class="site-link" data-act="site" data-site="${k}">${x.title} <span aria-hidden="true">→</span></button>`).join('');
+  } else {
+    bar = `<button class="back" data-act="back" aria-label="Back to the Content Hub">←</button>${brand(SITES[site].title.toUpperCase())}`;
+    const vs = SITES[site].views;
+    tabs = vs.length > 1 ? vs.map(([k,l]) => `<button data-act="nav" data-v="${k}" class="${S.view===k?'on':''}">${l}</button>`).join('')
+      : `<button data-act="back" class="site-link">← Back to the Content Hub</button>`;
+  }
+  $('#hdr').className = 'top ' + (site==='hub' ? '' : 'sub-site');
+  $('#hdr').innerHTML = `${banner}<div class="bar">${bar}<div class="sp"></div><div id="userchip" class="userchip"></div></div><nav class="tabs" id="tabs">${tabs}</nav>`;
+  const uc = $('#userchip');
+  if (store.mode==='demo') {
+    const names = S.settings.members.map(m=>m.name).filter(Boolean);
+    uc.innerHTML = `<span class="avatar">${esc(initials(S.me.name))}</span><select data-chg="demoUser" aria-label="Who's using the hub" style="width:auto;min-height:30px;padding:3px 8px">${names.map(n=>`<option ${n===S.me.name?'selected':''}>${esc(n)}</option>`).join('')}</select>`;
+  } else {
+    uc.innerHTML = `<span class="avatar">${esc(initials(S.me.name))}</span><span>${esc(S.me.name)}</span>`;
+  }
+}
+function renderView(){
+  const v = $('#view'); if (!v) return;
+  const fn = VIEWS[S.view] || VIEWS.calendar;
+  v.innerHTML = fn();
+  hydrate(v); syncAllLabel();
+}
+
+// =====================================================================
+// CALENDAR
+// =====================================================================
+function postsOn(ds){ return S.posts.filter(p=>p.date===ds && p.source!=='manual').sort(byCreated); }
+function mixCounts(from, days=7){
+  const counts = {}; for (let i=0;i<days;i++){ postsOn(iso(addDays(from,i))).forEach(p=>{ counts[p.funnelId] = (counts[p.funnelId]||0)+1; }); }
+  return counts;
+}
+function mixBar(counts){
+  const total = Object.values(counts).reduce((a,b)=>a+b,0);
+  if (!total) return `<div class="mix"></div>`;
+  const order = [...S.settings.funnels.map(f=>f.id), ...Object.keys(counts).filter(k=>!S.settings.funnels.some(f=>f.id===k))];
+  return `<div class="mix" title="Funnel mix">${order.filter(k=>counts[k]).map(k=>`<div style="flex:${counts[k]};background:${esc(funnelOf(k).color)}"></div>`).join('')}</div>`;
+}
+function mixChips(counts){
+  const order = S.settings.funnels.map(f=>f.id).concat(Object.keys(counts).filter(k=>!S.settings.funnels.some(f=>f.id===k)));
+  const items = order.filter(k=>counts[k]).map(k=>`<span class="chip"><span class="dot" style="background:${esc(funnelOf(k).color)}"></span>${esc(funnelOf(k).name)}: ${counts[k]}</span>`);
+  return items.length ? items.join('') : `<span class="tiny">Nothing planned yet</span>`;
+}
+function viewCalendar(){
+  const m = S.cal.month, first = mondayOf(m), today = todayISO();
+  const selMon = iso(mondayOf(parseISO(S.cal.sel)));
+  let weeks = '', cur = new Date(first);
+  do {
+    const wkIso = iso(cur); let days = '';
+    for (let i=0;i<7;i++){
+      const d = addDays(cur,i), ds = iso(d), posts = postsOn(ds);
+      const cls = ['day', d.getMonth()!==m.getMonth()?'out':'', ds===today?'today':'', ds===S.cal.sel?'selday':''].join(' ');
+      days += `<div class="${cls}" data-act="day" data-date="${ds}" data-n="${posts.length}">
+        <span class="dnum">${d.getDate()}</span>
+        ${posts.length ? `<div class="bands">${posts.map(p=>{ const f = funnelOf(p.funnelId); return `<div class="band ${STATUS_CLS[p.status]||''}" style="background-color:${esc(f.color)};color:${textOn(f.color)}" data-act="openPost" data-id="${p.id}" title="${esc(p.title)} — ${esc(p.status)}"><span class="bt">${p.repostOf?'↻ ':''}${esc(p.title)}</span><span class="bs">${STATUS_ICON[p.status]||''}</span></div>`; }).join('')}</div>` : ''}
+      </div>`;
+    }
+    weeks += `<div class="cal-week ${wkIso===selMon?'sel':''}"><div class="cal-days">${days}</div>${mixBar(mixCounts(cur))}</div>`;
+    cur = addDays(cur,7);
+  } while (cur.getMonth() === m.getMonth() && cur <= new Date(m.getFullYear(), m.getMonth()+1, 0));
+
+  return `
+  <div class="vhead">
+    <h2>${m.toLocaleDateString('en-IE',{month:'long',year:'numeric'})}</h2>
+    <button class="btn sm" data-act="calPrev" aria-label="Previous month">‹</button>
+    <button class="btn sm" data-act="calToday">Today</button>
+    <button class="btn sm" data-act="calNext" aria-label="Next month">›</button>
+    <button class="btn primary" data-act="newPost" data-date="${S.cal.sel}">+ Post</button>
+  </div>
+  <div class="cal-wrap">
+    ${sec('cal-month', `<h3>Month</h3><span class="cnt">${S.posts.filter(p=>p.date && p.source!=='manual' && parseISO(p.date).getMonth()===m.getMonth() && parseISO(p.date).getFullYear()===m.getFullYear()).length} posts</span>`, `
+      <div class="legend">${S.settings.funnels.map(f=>`<span><i style="background:${esc(f.color)}"></i>${esc(f.name)}</span>`).join('')}
+        <span class="tiny" style="font-weight:500">🎬 To film · ✂️ Edited · ⏰ Scheduled · ✅ Posted</span></div>
+      <div class="cal">
+        <div class="cal-dow">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<div>${d}</div>`).join('')}</div>
+        ${weeks}
+      </div>`)}
+    ${calSidebar()}
+  </div>`;
+}
+function calSidebar(){
+  const mon = mondayOf(parseISO(S.cal.sel));
+  const sun = addDays(mon,6);
+  let body = '';
+  for (let i=0;i<7;i++){
+    const ds = iso(addDays(mon,i)), posts = postsOn(ds);
+    body += `<div class="side-day ${ds===S.cal.sel?'hl':''}">
+      <div class="dh"><span>${fmtDay(ds)}</span><button class="icon-btn" data-act="newPost" data-date="${ds}" title="Add post on ${fmtDay(ds)}">＋</button></div>
+      ${posts.map(p=>{ const f = funnelOf(p.funnelId); return `<div class="sitem" data-act="openPost" data-id="${p.id}">
+        <div class="sw" style="background:${esc(f.color)}"></div>
+        <div style="min-width:0"><div class="st">${p.repostOf?'↻ ':''}${esc(p.title)}</div>
+        <div class="sm">${esc(funnelLabel(p.funnelId,p.typeId))}</div>
+        <div class="sm"><span>${STATUS_ICON[p.status]||''} ${esc(p.status)}</span>${platChips(p.platforms)}</div></div></div>`; }).join('') || `<div class="tiny" style="padding:0 2px 4px">—</div>`}
+    </div>`;
+  }
+  return sec('cal-week', `<h3>Week of ${mon.toLocaleDateString('en-IE',{day:'numeric',month:'short'})} – ${sun.toLocaleDateString('en-IE',{day:'numeric',month:'short'})}</h3>`, `
+    <div class="wk-mix">${mixChips(mixCounts(mon))}</div>
+    <div class="row" style="gap:6px"><button class="btn sm" data-act="wkPrev">‹ Prev week</button><button class="btn sm" data-act="wkNext">Next week ›</button><button class="btn sm ghost" data-act="toWeekly" data-wk="${iso(mon)}">Weekly review →</button></div>
+    ${body}`, {cls:'side'});
+}
+
+// =====================================================================
+// POST EDITOR (calendar posts + library entries)
+// =====================================================================
+function typeOptions(fid, sel){ const f = funnelOf(fid); return `<option value="">— No type —</option>` + f.types.map(t=>`<option value="${t.id}" ${t.id===sel?'selected':''}>${esc(t.name)}</option>`).join(''); }
+function funnelOptions(sel){ return S.settings.funnels.map(f=>`<option value="${f.id}" ${f.id===sel?'selected':''}>${esc(f.name)}</option>`).join(''); }
+
+function openPostEditor(post={}, opts={}){
+  const isNew = !post.id;
+  const p = clean({ title:'', date: isNew && post.source!=='manual' ? todayISO() : '', funnelId: S.settings.funnels[0]?.id || '', typeId:'', status: post.source==='manual' ? 'Posted' : 'To film',
+    platforms:['ig','tt'], notes:'', link:'', lastPosted:'', repostOf:'', screenshotId:'', thumbId:'', stats:{}, recycle:'', source:'calendar', ...post });
+  const manual = p.source === 'manual';
+  const fresh = new Set(); // images uploaded during this edit
+  const toDelete = new Set();
+  const origStats = JSON.stringify(p.stats||{});
+  const wasPosted = !isNew && post.status === 'Posted';
+
+  const html = `
+  <div class="mh"><h3>${isNew ? (manual?'Add old video':'New post') : (manual?'Edit video':'Edit post')}</h3><button class="icon-btn" data-close>✕</button></div>
+  <div class="mb">
+    ${manual ? '' : `<div class="field repost-box"><label class="chk-line"><input type="checkbox" id="pe-isrepost" ${p.repostOf?'checked':''}> This is a repost of an older video</label>
+      <div id="pe-orig-wrap" ${p.repostOf?'':'hidden'}><label class="f" for="pe-orig">Original video</label>
+        <select id="pe-orig"><option value="">Choose the original…</option>${S.posts.filter(x => x.id!==p.id && !x.repostOf && (isPosted(x)||x.source==='manual')).sort((a,b)=>a.title.localeCompare(b.title)).map(o=>`<option value="${o.id}" ${o.id===p.repostOf?'selected':''}>${esc(o.title)}${o.date?' · '+fmtDate(o.date):''}</option>`).join('')}</select>
+        <div class="tiny" style="margin-top:4px">It counts as a repost on the original in the Library, so it won't show up twice.</div></div></div>`}
+    <div class="field"><label class="f" for="pe-title">Full title</label><input id="pe-title" value="${esc(p.title)}" placeholder="e.g. Myth: carbs at night make you fat"></div>
+    <div class="grid2">
+      <div class="field"><label class="f" for="pe-date">${manual?'First posted (optional)':'Posting date'}</label><input id="pe-date" type="date" value="${esc(p.date)}"><div class="tiny" id="pe-date-wk"></div></div>
+      <div class="field"><label class="f">Status</label><select id="pe-status" ${manual?'disabled':''}>${STATUSES.map(s=>`<option ${s===p.status?'selected':''}>${s}</option>`).join('')}</select></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label class="f">Funnel</label><select id="pe-funnel">${funnelOptions(p.funnelId)}</select></div>
+      <div class="field"><label class="f">Content type</label><select id="pe-type">${typeOptions(p.funnelId,p.typeId)}</select></div>
+    </div>
+    <div class="field"><label class="f" for="pe-link">Link to the post</label><input id="pe-link" type="url" inputmode="url" value="${esc(p.link||'')}" placeholder="https://www.instagram.com/reel/…"></div>
+    <div class="field"><label class="f">Platforms</label><div class="pill-sel" id="pe-plats">${PLATFORMS.map(pl=>`<label class="${p.platforms.includes(pl.id)?'on':''}"><input type="checkbox" value="${pl.id}" ${p.platforms.includes(pl.id)?'checked':''}>${pl.name}</label>`).join('')}</div></div>
+    <div class="field"><label class="f">Notes / caption / why we're posting it</label><textarea id="pe-notes" rows="3">${esc(p.notes)}</textarea></div>
+    <div class="grid2">
+      <div class="field"><label class="f">Thumbnail <span id="pe-treq" class="tiny"></span></label><div id="pe-thumb"></div></div>
+      <div class="field"><label class="f">Screenshot of the post <span id="pe-req" class="tiny"></span></label><div id="pe-shot"></div></div>
+    </div>
+    <div class="grid2" id="pe-recycle-wrap">
+      <div class="field"><label class="f" for="pe-last">Last posted (if reposted)</label>
+        <div class="row" style="flex-wrap:nowrap;gap:6px"><input id="pe-last" type="date" value="${esc(p.lastPosted||'')}"><button type="button" class="btn sm" id="pe-last-today">Today</button></div>
+        <div class="tiny" id="pe-last-wk"></div></div>
+      <div class="field"><label class="f" for="pe-recycle">What to do with it next</label>
+        <select id="pe-recycle">${Object.entries(RECYCLE).map(([k,v])=>`<option value="${k}" ${k===(p.recycle||'')?'selected':''}>${v}</option>`).join('')}</select></div>
+    </div>
+    <div class="field" id="pe-stats-wrap"><label class="f">Stats <span class="tiny">${p.statsLoggedAt?`· last logged ${fmtDateTime(p.statsLoggedAt)}${p.statsBy?' by '+esc(p.statsBy):''}`:`· log them ${S.settings.statsDays} days after posting`}</span></label><div id="pe-stats"></div>
+      <div class="tiny">Avg watch time as m:ss (e.g. 0:14) or seconds.</div></div>
+    <div id="pe-err" class="err-msg"></div>
+    ${isNew ? `<div class="thread tiny">Save first to start a discussion on this post.</div>` : threadHTML(p.id,'post')}
+  </div>
+  <div class="mf">
+    ${isNew ? '' : `<button class="btn danger" id="pe-del">Delete</button>`}
+    <div class="sp"></div>
+    <button class="btn" data-close>Cancel</button>
+    <button class="btn primary" id="pe-save">Save</button>
+  </div>`;
+
+  const m = openModal(html, { onClose: async saved => { if (!saved) for (const id of fresh) await deleteImage(id); } });
+
+  const readStats = () => {
+    $$('#pe-stats input', m).forEach(inp => {
+      const [pl, mt] = inp.dataset.k.split('.');
+      p.stats[pl] ??= {};
+      const v = mt==='avgWatch' ? parseWatch(inp.value) : num(inp.value);
+      p.stats[pl][mt] = v;
+    });
+  };
+  const drawStats = () => {
+    const showStats = manual || ['Posted','Scheduled'].includes($('#pe-status',m).value) || Object.keys(p.stats||{}).length;
+    $('#pe-stats-wrap',m).style.display = showStats ? '' : 'none';
+    $('#pe-recycle-wrap',m).style.display = (manual || $('#pe-status',m).value==='Posted') ? '' : 'none';
+    $('#pe-stats',m).innerHTML = p.platforms.length ? p.platforms.map(pid => { const pl = plat(pid); const st = p.stats?.[pid]||{};
+      return `<div class="stats-plat"><h5>${pl.name}</h5><div class="stats-grid">${pl.metrics.map(mt=>`<div><label>${metricLabel(pid,mt)}</label><input data-k="${pid}.${mt}" inputmode="${mt==='avgWatch'?'text':'numeric'}" value="${mt==='avgWatch'?fmtWatch(st[mt]):(st[mt]??'')}" placeholder="${mt==='avgWatch'?'0:00':'—'}"></div>`).join('')}</div></div>`; }).join('')
+      : `<div class="tiny">Pick at least one platform.</div>`;
+  };
+  const imgField = (key, label) => {
+    const el = $(key==='screenshotId' ? '#pe-shot' : '#pe-thumb', m); if (!el) return;
+    const id = p[key];
+    const needed = key==='thumbId' ? (manual && !p.thumbId && !p.screenshotId) : (!manual && !wasPosted && $('#pe-status',m).value==='Posted' && !id);
+    el.innerHTML = `<div class="imgfield ${needed?'req':''}">
+      <div class="prev">${id ? `<img data-img="${thumb(id)}" data-full="${id}" alt="">` : (needed?'Required':'No image')}</div>
+      <div class="row" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <span class="btn sm upload-btn">${id?'Replace':'Upload'}<input type="file" accept="image/*"></span>
+        ${id ? `<a class="btn sm ghost" data-dl="${id}">Download</a><button class="btn sm ghost" data-rm>Remove</button>` : ''}
+      </div></div>`;
+    $('#pe-req',m).textContent = (!manual && $('#pe-status',m).value==='Posted') ? '· required when Posted' : '';
+    $('#pe-treq',m).textContent = manual ? '· required' : '· shows in the Library';
+    hydrate(el);
+    $('input[type=file]',el).onchange = async e => {
+      const f = e.target.files[0]; if (!f) return;
+      el.querySelector('.prev').textContent = 'Uploading…';
+      try { const nid = await uploadImage(f); fresh.add(nid); if (p[key]) { fresh.has(p[key]) ? (await deleteImage(p[key]), fresh.delete(p[key])) : toDelete.add(p[key]); } p[key] = nid; }
+      catch(err){ toast(err.message,'err'); }
+      imgField(key,label); if (key==='screenshotId' || key==='thumbId') { imgField(key==='thumbId'?'screenshotId':'thumbId'); }
+    };
+    const rm = $('[data-rm]',el); if (rm) rm.onclick = async () => { if (fresh.has(p[key])) { await deleteImage(p[key]); fresh.delete(p[key]); } else toDelete.add(p[key]); p[key] = ''; imgField(key,label); };
+    const dl = $('[data-dl]',el); if (dl) dl.onclick = async () => { const src = await getImg(dl.dataset.dl); if (src) download(`${(p.title||'image').replace(/[^\w-]+/g,'_')}.jpg`, src); };
+    const im = $('.prev img',el); if (im) im.onclick = () => lightbox(im.dataset.full);
+  };
+
+  $('#pe-funnel',m).onchange = e => { p.funnelId = e.target.value; $('#pe-type',m).innerHTML = typeOptions(p.funnelId,''); };
+  $('#pe-status',m).onchange = () => { readStats(); drawStats(); imgField('screenshotId'); };
+  $('#pe-plats',m).onchange = e => { readStats(); const v = e.target.value; e.target.closest('label').classList.toggle('on', e.target.checked);
+    p.platforms = e.target.checked ? [...new Set([...p.platforms, v])] : p.platforms.filter(x=>x!==v);
+    p.platforms.sort((a,b)=>PLATFORMS.findIndex(x=>x.id===a)-PLATFORMS.findIndex(x=>x.id===b)); drawStats(); };
+  drawStats(); imgField('screenshotId'); imgField('thumbId');
+  const rpBox = $('#pe-isrepost',m);
+  if (rpBox) {
+    rpBox.onchange = () => { $('#pe-orig-wrap',m).hidden = !rpBox.checked; };
+    $('#pe-orig',m).onchange = e => { const o = S.posts.find(x=>x.id===e.target.value); if (!o) return;
+      if (!$('#pe-title',m).value.trim()) $('#pe-title',m).value = o.title;
+      $('#pe-funnel',m).value = o.funnelId; p.funnelId = o.funnelId; $('#pe-type',m).innerHTML = typeOptions(o.funnelId, o.typeId);
+      if (!$('#pe-link',m).value.trim() && o.link) {} };
+  }
+  const wkTxt = () => { const d = $('#pe-date',m).value, l = $('#pe-last',m).value; $('#pe-date-wk',m).textContent = d ? halfWeeks(d) : ''; $('#pe-last-wk',m).textContent = l ? halfWeeks(l) : 'Leave blank if it has only been posted once.'; };
+  $('#pe-date',m).addEventListener('input', wkTxt); $('#pe-last',m).addEventListener('input', wkTxt);
+  $('#pe-last-today',m).onclick = () => { $('#pe-last',m).value = todayISO(); wkTxt(); };
+  wkTxt();
+
+  const del = $('#pe-del',m);
+  if (del) del.onclick = async () => {
+    if (!await askConfirm(`Delete "${p.title||'this post'}"? This removes it from the calendar, library and review.`)) return;
+    await store.remove('posts', p.id);
+    for (const id of [p.screenshotId, p.thumbId, ...fresh, ...toDelete]) if (id) await deleteImage(id);
+    for (const c of S.comments.filter(c=>c.parentId===p.id)) await store.remove('comments', c.id);
+    const idea = S.ideas.find(i=>i.postId===p.id); if (idea) await store.update('ideas', idea.id, {status:'open', postId:''});
+    closeModal(true); toast('Deleted');
+  };
+
+  $('#pe-save',m).onclick = async () => {
+    readStats();
+    p.title = $('#pe-title',m).value.trim(); p.date = $('#pe-date',m).value; p.status = manual ? 'Posted' : $('#pe-status',m).value;
+    p.funnelId = $('#pe-funnel',m).value; p.typeId = $('#pe-type',m).value; p.notes = $('#pe-notes',m).value.trim(); p.recycle = $('#pe-recycle',m).value;
+    p.lastPosted = $('#pe-last',m).value; let lk = $('#pe-link',m).value.trim(); if (lk && !/^https?:\/\//i.test(lk)) lk = 'https://' + lk; p.link = lk;
+    const err = t => { $('#pe-err',m).textContent = t; };
+    const rpb = $('#pe-isrepost',m); p.repostOf = rpb && rpb.checked ? $('#pe-orig',m).value : '';
+    if (rpb && rpb.checked && !p.repostOf) return err('Choose the original video, or untick "This is a repost".');
+    if (!p.title) return err('Add a title.');
+    if (!manual && !p.date) return err('Pick a posting date.');
+    if (!p.platforms.length) return err('Pick at least one platform.');
+    if (!manual && p.status==='Posted' && !p.screenshotId && !wasPosted) return err('Add a screenshot of the post before marking it Posted.');
+    if (manual && !p.thumbId && !p.screenshotId) return err('Add a thumbnail for this video.');
+    // keep only stats for selected platforms
+    const stats = {}; p.platforms.forEach(pl => { if (p.stats?.[pl] && Object.values(p.stats[pl]).some(v=>v!=null)) stats[pl] = p.stats[pl]; });
+    p.stats = stats;
+    if (JSON.stringify(stats) !== origStats && Object.keys(stats).length) { p.statsLoggedAt = Date.now(); p.statsBy = S.me.name; }
+    const {id, ...data} = p;
+    $('#pe-save',m).disabled = true;
+    try {
+      if (isNew) { data.createdAt = Date.now(); data.createdBy = S.me.name; const nid = await store.add('posts', data);
+        if (opts.ideaId) await store.update('ideas', opts.ideaId, {status:'scheduled', postId:nid}); }
+      else { data.updatedAt = Date.now(); data.updatedBy = S.me.name; await store.set('posts', id, data); }
+      for (const did of toDelete) await deleteImage(did);
+      fresh.clear(); closeModal(true); toast('Saved');
+      if (!manual && p.date) { S.cal.sel = p.date; }
+    } catch(e){ console.error(e); $('#pe-save',m).disabled = false; err('Could not save: '+e.message); }
+  };
+  setTimeout(()=>{ if (isNew) $('#pe-title',m).focus(); }, 30);
+}
+
+// =====================================================================
+// IDEAS
+// =====================================================================
+function allSeries(){ return [...new Set(S.ideas.map(i=>i.series).filter(Boolean))].sort(); }
+const HOOKS = [
+ ['Instant hooks', [
+  "Everyone told me this wouldn't work… until it did.","If you're new to ___, you need to hear this.","This is the truth no one tells you about ___.",
+  "I made this mistake for months — don't do the same.","This small change completely transformed my results.","You're probably doing ___ wrong (and don't even realise it).",
+  "I thought I'd be stuck in ___ forever until I tried this.","I wish someone had told me this before starting ___.","If you feel lost in ___, this is what helped me.",
+  "Why your ___ isn't working (and how to fix it).","This simple adjustment in my routine changed everything.","Why I almost quit ___ (but didn't).",
+  "The advice I ignored for years — and I regret it.","Everyone complicates ___ too much. This is the real secret.","What was silently ruining my progress in ___.",
+  "This underestimated tip knocked ___ out of the park overnight.","The myth about ___ that keeps most people stuck.","If you're doing ___, do this instead.",
+  "No one told me ___ was going to be this difficult.","I tried 3 strategies for ___ — this is what really worked."]],
+ ['Tips, tools & hacks', [
+  "5 small habits that improved my ___ instantly.","The 10-minute routine that changed how I approach ___.","This app completely simplified my ___ process.",
+  "3 tools for beginners I use daily for ___.","The checklist I follow before every ___.","The lazy way I organise my ___ (but it works).",
+  "How to cut your ___ time in half without losing quality.","My step-by-step system to stay consistent with ___.","The easiest way to measure progress in ___.",
+  "If you always forget ___, try this.","My underrated favourite tool for ___.","Stop overcomplicating ___. Here's a simple approach.",
+  "The setup I use to record / edit / create ___.","The shortcut that saves me time when I do ___.","How I automated part of my ___ process.",
+  "The hack that helps me stay focused on ___.","3 mistakes that made my ___ harder than necessary.","The productivity trick I swear by when doing ___.",
+  "How I plan a week of ___ in 1 hour.","The formula I use every time I create ___."]],
+ ['Beginners & how-to', [
+  "How to start ___ without getting overwhelmed.","The beginner's guide I wish I had when I started ___.","The 3-step method I use to simplify ___.",
+  "How I plan my entire ___ process from start to finish.","My exact workflow for ___ (you can copy it).","How to build a habit around ___ that actually sticks.",
+  "The mistake every beginner makes in ___.","How to stay consistent with ___ without burnout.","The 5 things I wish I'd known before starting ___.",
+  "How to get faster results in ___ using this method.","How to fix your ___ routine once and for all.","The tools I use daily to make ___ easier.",
+  "How I organise my week to stay consistent with ___.","The biggest trap for beginners in ___ and how to avoid it.","How to plan your first ___ like a professional.",
+  "How to build your first ___ system.","My simple way to track progress in ___.","The skill that makes everything in ___ much easier.",
+  "How to bounce back when you fail at ___.","How to start ___ even without experience."]],
+ ['Storytelling & mindset', [
+  "When I started ___, I had no idea what I was doing.","This failure in ___ taught me more than any success.","I used to think ___ was selfish — now I see it as self-care.",
+  "This is what I learned by doing ___ every day for 30 days.","I wish I had known this about ___ before starting.","The day I almost quit ___, but didn't.",
+  "My biggest revelation after months of ___.","How I manage burnout while doing ___.","The hardest lesson about starting ___ (not what people think).",
+  "I thought ___ would make me happy. I was wrong.","Why I stopped chasing perfection in ___.","How I turned my worst moment into motivation for ___.",
+  "This mindset shift changed everything in ___.","This is what real progress in ___ actually looks like.","No one talks about how lonely ___ can feel sometimes.",
+  "How ___ helped me rebuild my confidence.","What I learned about patience by doing ___.","How I found my purpose through ___.",
+  "The lesson that completely changed how I see ___.","What I tell myself when I want to give up on ___."]],
+ ['Growth hooks', [
+  "3 things I wish I knew sooner…","The quickest way to…","The best piece of advice I can give you…",
+  "How I went from ___ to ___.","The most common thing I hear from my clients is…","The biggest myth about ___…",
+  "POV: ___","7 ways to…","3 things that can instantly change your…",
+  "Why is no one talking about ___?","3 things you need to start doing if you want…","The number 1 reason you're not ___.",
+  "Here's the thing you didn't know about ___.","5 things I never do to ___.","STOP doing ___ if you want ___.",
+  "The problem isn't ___, it's ___.","The fastest way to ___.","Do you want to know the secret to ___?",
+  "Unpopular opinion, but…","I can't believe this happened…","Watch to the end if you want ___.",
+  "5 things you didn't know about…","This is your reminder that…","This is why ___ isn't working."]],
+ ['Quick-fire hooks', [
+  "Tell me if I'm wrong…","I just made ___ doing this.","I didn't expect this.","My top 5 tips for…","This is the truth about…",
+  "If you're still struggling with…","Watch till the end.","This is all over Instagram.","Stop wasting time on…","How I fixed this in 3 days.",
+  "Stop scrolling if you want to…","This broke the internet.","Be honest:","This feels illegal to know.","You've been lied to about…",
+  "I was wrong…","How to instantly improve…","This is why you're not growing…","Don't skip this.","Replace this with this.",
+  "If you've ever felt this, listen.","Everyone is doing this.","Can I tell you a secret?","The secret nobody talks about…","This doubled my results.",
+  "Are you guilty of this?","This changed everything for me.","You're doing it wrong.","Here's how I did it.","I finally gave in…",
+  "This gets crazy.","No more ___ → here's how.","What if I told you…","Everyone is wrong about…","This saved me months.",
+  "If you hate this problem…","This will shock you.","My biggest mistake was…","Steal my ___.","This is a trap.",
+  "I wish I knew this sooner.","Raise your hand if…","This gets insane.","Here's the real solution.","I've got a secret.",
+  "This mistake is costing you…","From ___ to ___.","If this is you…","Let's settle this once and for all.","This is where it gets interesting.",
+  "If you're still doing this, stop now.","This worked instantly.","The day everything changed…","Here's what they don't want you to know…","Stop making this mistake.",
+  "I tried this for 30 days.","If you're doing this, stop.","I've been keeping a secret…","7 ways to ___.","I regret doing this."]],
+];
+function hookBank(){
+  let n = 0; const total = HOOKS.reduce((a,[,l])=>a+l.length,0);
+  const groups = HOOKS.map(([cat, list]) => { const start = n+1;
+    const items = list.map(h => { n++; return `<li><button type="button" class="hook" data-act="copyHook" data-h="${esc(h)}"><span class="hn">${n}</span><span class="ht">${esc(h)}</span></button></li>`; }).join('');
+    return sec(`hooks-${cat}`, `<span class="tg-t">${esc(cat)}</span><span class="tg-n">${start}–${n}</span>`, `<ol class="hooks">${items}</ol>`, {sub:true, def:false}); }).join('');
+  return sec('ideas-hooks', `<h3>Hook bank</h3><span class="cnt">${total}</span>`, `<p class="tiny" style="margin:0 0 8px">Tap a hook to copy it, then fill the blanks with the topic.</p>${groups}`, {def:false, cls:'hookbank'});
+}
+
+function viewIdeas(){
+  const {q, series, showScheduled} = S.idf; const ql = q.toLowerCase();
+  const list = S.ideas.filter(i => (showScheduled || i.status!=='scheduled') && (!series || i.series===series) &&
+    (!ql || [i.title,i.description,i.series,i.research].join(' ').toLowerCase().includes(ql)));
+  const funnels = [...S.settings.funnels];
+  const orphan = list.filter(i=>!S.settings.funnels.some(f=>f.id===i.funnelId));
+  if (orphan.length) funnels.push({id:'__none', name:'Unassigned', color:'#7d8a87', types:[]});
+  const cols = funnels.map(f => {
+    const items = f.id==='__none' ? orphan : list.filter(i=>i.funnelId===f.id);
+    const groups = [...f.types.map(t=>({t, items: items.filter(i=>i.typeId===t.id)})), {t:{id:'none',name:'Other / no type'}, items: items.filter(i=>!f.types.some(t=>t.id===i.typeId))}].filter(g=>g.items.length);
+    const head = `<span class="fdot" style="background:${esc(f.color)}"></span><h3>${esc(f.name)}</h3><span class="cnt">${items.length}</span>
+      ${f.id!=='__none'?`<button class="icon-btn add" data-act="newIdea" data-f="${f.id}" title="Add idea to ${esc(f.name)}">＋</button>`:''}`;
+    const body = groups.map(g => sec(`ig-${f.id}-${g.t.id}`, `<span class="tg-t">${esc(g.t.name)}</span><span class="tg-n">${g.items.length}</span>`,
+        g.items.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map(ideaCard).join(''), {sub:true})).join('') || `<div class="empty">No ideas here yet.</div>`;
+    return sec(`ideas-${f.id}`, head, body, {cls:'fcol', style:`--fc:${esc(f.color)}`});
+  }).join('');
+  return `
+  <div class="vhead"><h2>Ideas</h2>${allToggle()}<button class="btn primary" data-act="newIdea">+ New idea</button></div>
+  ${hookBank()}
+  <div class="filters">
+    <input type="text" id="idf-q" placeholder="Search ideas…" value="${esc(q)}" data-inp="idfQ">
+    <select id="idf-series" data-chg="idfSeries"><option value="">All series</option>${allSeries().map(s=>`<option ${s===series?'selected':''}>${esc(s)}</option>`).join('')}</select>
+    <label class="chk"><input type="checkbox" data-chg="idfSched" ${showScheduled?'checked':''}> Show scheduled</label>
+  </div>
+  <div class="ideas-cols" style="--cols:${Math.min(funnels.length,4)}">${cols}</div>`;
+}
+function ideaCard(i){
+  const img = i.imageIds?.[0];
+  return `<div class="icard ${i.status==='scheduled'?'done':''}" data-act="openIdea" data-id="${i.id}">
+    <div class="ib"><div class="it">${esc(i.title)}</div>${i.description?`<div class="id">${esc(i.description)}</div>`:''}
+    <div class="im">${i.series?`<span class="chip">📺 ${esc(i.series)}</span>`:''}${i.status==='scheduled'?`<span class="chip">📅 Scheduled</span>`:''}${(S.comments.filter(c=>c.parentId===i.id).length)?`<span class="chip">💬 ${S.comments.filter(c=>c.parentId===i.id).length}</span>`:''}<span class="tiny">${esc(i.createdBy||'')}</span></div></div>
+    ${img?`<img data-img="${thumb(img)}" alt="">`:''}
+  </div>`;
+}
+function openIdeaEditor(idea={}){
+  const isNew = !idea.id;
+  const d = clean({title:'',description:'',funnelId:S.settings.funnels[0]?.id||'',typeId:'',series:'',research:'',imageIds:[],status:'open',...idea});
+  const fresh = new Set(), toDelete = new Set();
+  const linked = d.postId ? S.posts.find(p=>p.id===d.postId) : null;
+  const html = `
+  <div class="mh"><h3>${isNew?'New idea':'Idea'}</h3><button class="icon-btn" data-close>✕</button></div>
+  <div class="mb">
+    ${linked?`<div class="card pad" style="margin-bottom:12px;background:var(--panel2)">📅 Scheduled as <b>${esc(linked.title)}</b> on ${linked.date?fmtDay(linked.date):'—'} · <a href="#" data-openpost="${linked.id}">Open post</a></div>`:''}
+    <div class="field"><label class="f">Rough title</label><input id="ie-title" value="${esc(d.title)}"></div>
+    <div class="field"><label class="f">Description</label><textarea id="ie-desc" rows="3">${esc(d.description)}</textarea></div>
+    <div class="grid2">
+      <div class="field"><label class="f">Funnel</label><select id="ie-funnel">${funnelOptions(d.funnelId)}</select></div>
+      <div class="field"><label class="f">Content type within the funnel</label><select id="ie-type">${typeOptions(d.funnelId,d.typeId)}</select></div>
+    </div>
+    <div class="field"><label class="f">Possible series</label><input id="ie-series" list="ie-series-list" value="${esc(d.series)}" placeholder="e.g. Elite Habits"><datalist id="ie-series-list">${allSeries().map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
+    <div class="field"><label class="f">Research / sources / references</label><textarea id="ie-research" rows="3" placeholder="Studies, links, reference videos, notes…">${esc(d.research)}</textarea></div>
+    <div class="field"><label class="f">Photos (context, references, thumbnail ideas)</label><div id="ie-gal"></div></div>
+    <div id="ie-err" class="err-msg"></div>
+    ${isNew ? `<div class="thread tiny">Save first to start a discussion on this idea.</div>` : threadHTML(d.id,'idea')}
+  </div>
+  <div class="mf">
+    ${isNew?'':`<button class="btn danger" id="ie-del">Delete</button>`}
+    <div class="sp"></div>
+    ${isNew||d.status==='scheduled'?'':`<button class="btn" id="ie-sched">📅 Schedule as post</button>`}
+    ${d.status==='scheduled'&&!linked?`<button class="btn" id="ie-reopen">Mark as open</button>`:''}
+    <button class="btn" data-close>Cancel</button>
+    <button class="btn primary" id="ie-save">${isNew?'Submit idea':'Save'}</button>
+  </div>`;
+  const m = openModal(html, { onClose: async saved => { if (!saved) for (const id of fresh) await deleteImage(id); } });
+  const gal = () => {
+    const el = $('#ie-gal',m);
+    el.innerHTML = `<div class="gallery">${d.imageIds.map((id,ix)=>`<div class="gimg"><img data-img="${thumb(id)}" data-full="${id}" alt=""><div class="gact"><a href="#" data-dl="${id}">⬇︎</a><button data-rmimg="${ix}">✕</button></div></div>`).join('')}
+      <label class="gimg upload-btn" style="display:grid;place-items:center;cursor:pointer;color:var(--ink3);font-size:12px;text-align:center">＋ Add photos<input type="file" accept="image/*" multiple></label></div>`;
+    hydrate(el);
+    $$('img[data-full]',el).forEach(im=>im.onclick=()=>lightbox(im.dataset.full));
+    $$('[data-dl]',el).forEach(a=>a.onclick=async e=>{ e.preventDefault(); const src = await getImg(a.dataset.dl); if (src) download(`${(d.title||'idea').replace(/[^\w-]+/g,'_')}_${a.dataset.dl.slice(-4)}.jpg`, src); });
+    $$('[data-rmimg]',el).forEach(b=>b.onclick=async()=>{ const id = d.imageIds[+b.dataset.rmimg]; d.imageIds.splice(+b.dataset.rmimg,1); if (fresh.has(id)) { await deleteImage(id); fresh.delete(id);} else toDelete.add(id); gal(); });
+    $('input[type=file]',el).onchange = async e => {
+      const files = [...e.target.files]; if (!files.length) return; toast(`Uploading ${files.length} photo${files.length>1?'s':''}…`);
+      for (const f of files) { try { const id = await uploadImage(f); fresh.add(id); d.imageIds.push(id); } catch(err){ toast(err.message,'err'); } }
+      gal();
+    };
+  };
+  gal();
+  $('#ie-funnel',m).onchange = e => { $('#ie-type',m).innerHTML = typeOptions(e.target.value,''); };
+  const op = $('[data-openpost]',m); if (op) op.onclick = e => { e.preventDefault(); closeModal(true); openPostEditor(linked); };
+  const collect = () => { d.title=$('#ie-title',m).value.trim(); d.description=$('#ie-desc',m).value.trim(); d.funnelId=$('#ie-funnel',m).value; d.typeId=$('#ie-type',m).value; d.series=$('#ie-series',m).value.trim(); d.research=$('#ie-research',m).value.trim(); };
+  const save = async () => {
+    collect(); if (!d.title) { $('#ie-err',m).textContent = 'Add a rough title.'; return false; }
+    const {id, ...data} = d;
+    if (isNew) { data.createdAt = Date.now(); data.createdBy = S.me.name; d.id = await store.add('ideas', data); }
+    else { data.updatedAt = Date.now(); await store.set('ideas', id, data); }
+    for (const did of toDelete) await deleteImage(did); fresh.clear(); return true;
+  };
+  $('#ie-save',m).onclick = async () => { if (await save()) { closeModal(true); toast(isNew?'Idea submitted':'Saved'); } };
+  const sch = $('#ie-sched',m); if (sch) sch.onclick = async () => { if (!await save()) return; closeModal(true);
+    openPostEditor({title:d.title, funnelId:d.funnelId, typeId:d.typeId, notes:d.description, date: S.cal.sel >= todayISO() ? S.cal.sel : todayISO()}, {ideaId:d.id}); };
+  const ro = $('#ie-reopen',m); if (ro) ro.onclick = async () => { d.status='open'; d.postId=''; if (await save()) { closeModal(true); } };
+  const del = $('#ie-del',m); if (del) del.onclick = async () => {
+    if (!await askConfirm(`Delete the idea "${d.title}"?`)) return;
+    await store.remove('ideas', d.id); for (const id of [...d.imageIds, ...toDelete]) await deleteImage(id);
+    for (const c of S.comments.filter(c=>c.parentId===d.id)) await store.remove('comments', c.id);
+    closeModal(true); toast('Deleted');
+  };
+}
+
+// =====================================================================
+// LIBRARY (old content)
+// =====================================================================
+function lastDate(p){ const t = todayISO(); const ds = [p.lastPosted, p.date, ...repostsOf(p.id).filter(isPosted).map(x=>x.date)].filter(d => d && d <= t).sort(); return ds.pop() || p.date || ''; }
+const coverOf = p => p.thumbId || p.screenshotId || (p.repostOf ? (S.posts.find(x=>x.id===p.repostOf)?.thumbId || S.posts.find(x=>x.id===p.repostOf)?.screenshotId || '') : '');
+function viewLibrary(){
+  const {funnel, recycle, sort, q} = S.lf; const ql = q.toLowerCase();
+  let list = S.posts.filter(p => (isPosted(p) || p.source==='manual') && !isRepostEntry(p)
+    && (funnel==='all' || p.funnelId===funnel)
+    && (recycle==='all' || (p.recycle||'')===recycle)
+    && (!ql || [p.title,p.notes,p.link].join(' ').toLowerCase().includes(ql)));
+  const dk = p => lastDate(p) || '0000-00-00';
+  list.sort(sort==='old' ? (a,b)=>dk(a).localeCompare(dk(b)) : sort==='views' ? (a,b)=>totalViews(b)-totalViews(a) : (a,b)=>dk(b).localeCompare(dk(a)));
+  const ready = list.filter(repostReady).sort((a,b)=>lastDate(a).localeCompare(lastDate(b)));
+  const readyCount = ready.length;
+  const readySec = sec('lib-ready', `<span class="fdot" style="background:var(--warn);color:var(--warn)"></span><h3>Ready to repost</h3><span class="cnt warn">${readyCount}</span>`,
+    readyCount ? `<p class="tiny" style="margin:0 0 10px">Last posted ${S.settings.repostWeeks}+ weeks ago, longest first. Change the number of weeks in Settings.</p><div class="lrows">${ready.map(libRow).join('')}</div>`
+      : `<div class="tiny">Nothing is due yet. Videos show up here once they were last posted ${S.settings.repostWeeks}+ weeks ago.</div>`, {cls:'fsec', style:'--fc:var(--warn)', def:true});
+  const funnels = [...S.settings.funnels];
+  if (list.some(p=>!S.settings.funnels.some(f=>f.id===p.funnelId))) funnels.push({id:'__none', name:'Unassigned', color:'#7d8a87'});
+  const groups = funnels.filter(f => funnel==='all' || f.id===funnel).map(f => {
+    const items = list.filter(p => f.id==='__none' ? !S.settings.funnels.some(x=>x.id===p.funnelId) : p.funnelId===f.id);
+    if (!items.length) return '';
+    return sec(`lib-${f.id}`, `<span class="fdot" style="background:${esc(f.color)}"></span><h3>${esc(f.name)}</h3><span class="cnt">${items.length}</span>`,
+      `<div class="lrows">${items.map(libRow).join('')}</div>`, {style:`--fc:${esc(f.color)}`, cls:'fsec'});
+  }).join('');
+  return `
+  <div class="vhead"><h2>Library</h2><span class="muted">${list.length} video${list.length===1?'':'s'}${readyCount?` · <b style="color:var(--warn)">${readyCount}</b> ready to repost`:''}</span>
+    ${allToggle()}
+    <span class="btn upload-btn">Import videos<input type="file" data-chg="importVideos"></span>
+    <button class="btn primary" data-act="newOld">+ Add old video</button></div>
+  <div class="filters">
+    <input type="text" id="lf-q" placeholder="Search…" value="${esc(q)}" data-inp="lfQ">
+    <select id="lf-funnel" data-chg="lfFunnel"><option value="all">All funnels</option>${S.settings.funnels.map(f=>`<option value="${f.id}" ${f.id===funnel?'selected':''}>${esc(f.name)}</option>`).join('')}</select>
+    <select id="lf-recycle" data-chg="lfRecycle"><option value="all">Any next step</option>${Object.entries(RECYCLE).map(([k,v])=>`<option value="${k}" ${k===recycle?'selected':''}>${v}</option>`).join('')}</select>
+    <select id="lf-sort" data-chg="lfSort"><option value="new" ${sort==='new'?'selected':''}>Most recently posted</option><option value="old" ${sort==='old'?'selected':''}>Longest since posted</option><option value="views" ${sort==='views'?'selected':''}>Most views</option></select>
+  </div>
+  ${list.length ? readySec : ''}
+  ${groups || `<div class="card empty">Nothing here yet. Posts you mark as Posted land here automatically, and you can add older videos with “+ Add old video” or “Import videos”.</div>`}`;
+}
+const openRows = new Set();
+function libRow(p){
+  const f = funnelOf(p.funnelId), img = coverOf(p), ld = lastDate(p), op = openRows.has(p.id), tr = timesReposted(p);
+  const pls = p.platforms || [];
+  const tot = k => pls.reduce((a,pl)=>a+(p.stats?.[pl]?.[k]||0),0);
+  const has = pls.some(pl => p.stats?.[pl] && Object.values(p.stats[pl]).some(v=>v!=null));
+  const stats = has ? `<span><b>${fmtNum(tot('views'))}</b> views</span><span><b>${fmtNum(tot('comments'))}</b> comments</span><span><b>${fmtNum(tot('follows'))}</b> follows</span>` : `<span class="na">No stats yet</span>`;
+  const statRows = pls.filter(pl=>p.stats?.[pl]).map(pl => { const st = p.stats[pl]; return `<tr><td>${plat(pl).name}</td>${['views','comments','shares','saves','follows'].map(k=>`<td class="num">${plat(pl).metrics.includes(k)?(st[k]==null?'—':fmtNum(st[k])):'·'}</td>`).join('')}<td class="num">${st.avgWatch==null?'—':fmtWatch(st.avgWatch)}</td></tr>`; }).join('');
+  return `<details class="lrow" data-row="${p.id}" style="--fc:${esc(f.color)}" ${op?'open':''}>
+    <summary><span class="lr-t">${esc(p.title)}</span>
+      <span class="lr-m">${ld?esc(halfWeeks(ld)):'No date'}${tr?`<span class="rp">↻ ${tr}</span>`:''}${repostReady(p)?` <span class="rdy">♻︎ Ready</span>`:''}</span>
+      <span class="lr-s">${stats}</span><span class="chev" aria-hidden="true"></span></summary>
+    <div class="lr-b">
+      <div class="lr-img">${img?`<img ${op?'data-img':'data-limg'}="${thumb(img)}" data-full="${img}" alt="Thumbnail for ${esc(p.title)}">`:`<div class="noimg">No thumbnail</div>`}</div>
+      <div class="lr-d">
+        <div class="row" style="gap:6px">${fChip(p.funnelId,p.typeId)}${platChips(pls)}${p.recycle?`<span class="chip">♻︎ ${RECYCLE[p.recycle]}</span>`:''}</div>
+        <dl class="lr-dl">
+          <div><dt>First posted</dt><dd>${p.date?fmtDate(p.date):'—'}</dd></div>
+          <div><dt>Last posted</dt><dd>${ld && ld!==p.date?fmtDate(ld):'Not reposted'}</dd></div>
+          <div><dt>Since posted</dt><dd>${ld?esc(halfWeeks(ld)):'—'}</dd></div>
+          <div><dt>Times reposted</dt><dd>${tr}</dd></div>
+        </dl>
+        ${statRows?`<div class="tbl-wrap"><table class="tbl mini"><thead><tr><th>Platform</th><th class="num">Views</th><th class="num">Comm.</th><th class="num">Shares</th><th class="num">Saves</th><th class="num">Follows</th><th class="num">Watch</th></tr></thead><tbody>${statRows}</tbody></table></div>`:''}
+        ${p.notes?`<p class="tiny" style="margin:0">${esc(p.notes)}</p>`:''}
+        <div class="row" style="gap:6px">
+          ${p.link?`<a class="btn sm" href="${esc(p.link)}" target="_blank" rel="noopener" data-act="extLink">Open video ↗</a>`:''}
+          <button class="btn sm primary" data-act="openPost" data-id="${p.id}">Edit</button>
+          <button class="btn sm" data-act="repostToday" data-id="${p.id}">Reposted today</button>
+        </div>
+      </div>
+    </div>
+  </details>`;
+}
+function libCard(p){
+  const f = funnelOf(p.funnelId), img = coverOf(p), tv = totalViews(p), ld = lastDate(p);
+  return `<div class="lcard" data-act="openPost" data-id="${p.id}">
+    <div class="lthumb">${img?`<img data-img="${thumb(img)}" alt="">`:`<div class="noimg">No thumbnail</div>`}
+      ${ld?`<span class="weeks">${esc(halfWeeks(ld))}</span>`:''}
+      ${repostReady(p)?`<span class="ready">♻︎ Ready</span>`:''}</div>
+    <div class="lbody"><div class="lt">${esc(p.title)}</div>
+      <div class="lm">${p.lastPosted?`Last posted <b>${fmtDate(p.lastPosted)}</b>`:p.date?`Posted <b>${fmtDate(p.date)}</b>`:'No date yet'}</div>
+      ${p.lastPosted&&p.date&&p.date!==p.lastPosted?`<div class="lm">First posted ${fmtDate(p.date)}</div>`:''}
+      <div class="lm">${esc(typeName(p.funnelId,p.typeId)||'No type')}${tv?` · ${fmtNum(tv)} views`:''}</div>
+      <div class="lc">${platChips(p.platforms)}${p.recycle?`<span class="chip">♻︎ ${RECYCLE[p.recycle]}</span>`:''}</div>
+      ${p.link?`<a class="lk" href="${esc(p.link)}" target="_blank" rel="noopener" data-act="extLink">Open post ↗</a>`:''}</div>
+  </div>`;
+}
+
+// =====================================================================
+// REVIEW
+// =====================================================================
+function reviewRows(){
+  const r = S.rv;
+  const rows = [];
+  S.posts.filter(p => isPosted(p) && (r.funnel==='all'||p.funnelId===r.funnel) && (r.type==='all'||p.typeId===r.type)
+    && (!r.from || (p.date && p.date>=r.from)) && (!r.to || (p.date && p.date<=r.to)))
+    .forEach(p => (p.platforms||[]).forEach(pl => { if (r.platform!=='all' && pl!==r.platform) return;
+      const st = p.stats?.[pl] || {}; const pm = plat(pl).metrics;
+      const row = {p, pl}; REVIEW_COLS.forEach(k => row[k] = pm.includes(k) ? (st[k] ?? null) : undefined);
+      const eng = ['comments','shares','saves'].reduce((a,k)=>a+(row[k]||0),0);
+      row.eng = row.views ? eng/row.views*100 : null; rows.push(row); }));
+  const k = r.sort, dir = r.dir;
+  rows.sort((a,b)=>{
+    if (k==='date') return dir*((a.p.date||'').localeCompare(b.p.date||''));
+    if (k==='title') return dir*a.p.title.localeCompare(b.p.title);
+    if (k==='platform') return dir*a.pl.localeCompare(b.pl);
+    const av = a[k] ?? -Infinity, bv = b[k] ?? -Infinity; return dir*(av-bv);
+  });
+  return rows;
+}
+const BEST_METRICS = [['views','Views'],['comments','Comments'],['shares','Shares'],['saves','Saves'],['follows','Follows / subs'],['eng','Engagement %']];
+function bestHTML(rows){
+  const k = S.rv.best || 'views';
+  const agg = new Map();
+  rows.forEach(x => { let a = agg.get(x.p.id); if (!a) agg.set(x.p.id, a = {p:x.p, views:0, comments:0, shares:0, saves:0, follows:0, ev:0});
+    ['views','comments','shares','saves','follows'].forEach(m => a[m] += x[m]||0);
+    if (x.views && (x.comments!=null || x.shares!=null || x.saves!=null)) a.ev += x.views; });
+  const list = [...agg.values()].map(a => ({...a, eng: a.ev ? (a.comments+a.shares+a.saves)/a.ev*100 : 0}))
+    .filter(a => a[k] > 0 && (k!=='eng' || a.views >= 100)).sort((a,b)=>b[k]-a[k]).slice(0,5);
+  const val = (a,m) => m==='eng' ? a.eng.toFixed(1)+'%' : fmtNum(a[m]);
+  return `<div class="best-head"><label class="f" for="rv-best" style="margin:0">Top 5 by</label>
+    <select id="rv-best" data-chg="rvBest">${BEST_METRICS.map(([m,l])=>`<option value="${m}" ${m===k?'selected':''}>${l}</option>`).join('')}</select>
+    <span class="tiny">Uses the filters above.</span></div>
+    ${list.length ? `<div class="best">${list.map((a,i)=>{ const img = coverOf(a.p); return `<button type="button" class="best-row" data-act="openPost" data-id="${a.p.id}">
+      <span class="rk">${i+1}</span><span class="bt">${img?`<img data-img="${thumb(img)}" alt="">`:''}</span>
+      <span style="min-width:0"><span class="bn">${a.p.repostOf?'↻ ':''}${esc(a.p.title)}</span>
+        <span class="bs" style="display:block">${a.p.date?fmtDate(a.p.date)+' · ':''}${esc(funnelOf(a.p.funnelId).name)}${typeName(a.p.funnelId,a.p.typeId)?' · '+esc(typeName(a.p.funnelId,a.p.typeId)):''}</span>
+        <span class="bs" style="display:block">${BEST_METRICS.filter(([m])=>m!==k).map(([m,l])=>`${val(a,m)} ${l.split(' ')[0].toLowerCase()}`).join(' · ')}</span></span>
+      <span class="bv"><b>${val(a,k)}</b><span>${BEST_METRICS.find(x=>x[0]===k)[1]}</span></span></button>`; }).join('')}</div>`
+      : `<div class="tiny">No stats logged yet. Add stats to posted videos and the best performers show up here.</div>`}`;
+}
+function viewReview(){
+  const r = S.rv, rows = reviewRows();
+  const sum = k => rows.reduce((a,x)=>a+(x[k]||0),0);
+  const posts = new Set(rows.map(x=>x.p.id)).size;
+  const views = sum('views'), engT = sum('comments')+sum('shares')+sum('saves');
+  const engViews = rows.filter(x=>x.views && (x.comments!=null||x.shares!=null||x.saves!=null)).reduce((a,x)=>a+x.views,0);
+  const due = S.posts.filter(statsDue).sort((a,b)=>a.date.localeCompare(b.date));
+  const fTypes = r.funnel!=='all' ? funnelOf(r.funnel).types : [];
+  const byFunnel = S.settings.funnels.map(f => { const fr = rows.filter(x=>x.p.funnelId===f.id); const n = new Set(fr.map(x=>x.p.id)).size; const v = fr.reduce((a,x)=>a+(x.views||0),0);
+    const e = fr.reduce((a,x)=>a+(x.comments||0)+(x.shares||0)+(x.saves||0),0); const ev = fr.filter(x=>x.views&&(x.comments!=null||x.shares!=null||x.saves!=null)).reduce((a,x)=>a+x.views,0);
+    return {f, n, v, fol: fr.reduce((a,x)=>a+(x.follows||0),0), eng: ev? e/ev*100 : null}; });
+  const th = (k,l,cls='num') => `<th class="sortable ${cls} ${r.sort===k?'sorted':''}" data-act="rvSort" data-k="${k}">${l}${r.sort===k?(r.dir<0?' ↓':' ↑'):''}</th>`;
+  const cell = v => v===undefined ? `<td class="num na">·</td>` : `<td class="num">${v==null?'<span class="na">—</span>':fmtNum(v)}</td>`;
+  return `
+  <div class="vhead"><h2>Stats</h2>${allToggle()}<button class="btn sm" data-act="exportPosts">Export CSV</button></div>
+  ${due.length?sec('rv-due', `<h3>Stats due</h3><span class="cnt warn">${due.length}</span>`, `<p class="tiny" style="margin:0 0 8px">Posted ${S.settings.statsDays}+ days ago with missing numbers.</p>
+    <div class="row" style="gap:6px">${due.map(p=>`<button class="btn sm" data-act="openPost" data-id="${p.id}">${esc(p.title.length>38?p.title.slice(0,36)+'…':p.title)} · ${fmtDay(p.date)}</button>`).join('')}</div>`, {cls:'due'}):''}
+  <div class="filters">
+    <select id="rv-platform" data-chg="rvPlatform"><option value="all">All platforms</option>${PLATFORMS.map(p=>`<option value="${p.id}" ${p.id===r.platform?'selected':''}>${p.name}</option>`).join('')}</select>
+    <select id="rv-funnel" data-chg="rvFunnel"><option value="all">All funnels</option>${S.settings.funnels.map(f=>`<option value="${f.id}" ${f.id===r.funnel?'selected':''}>${esc(f.name)}</option>`).join('')}</select>
+    ${r.funnel!=='all'?`<select id="rv-type" data-chg="rvType"><option value="all">All types</option>${fTypes.map(t=>`<option value="${t.id}" ${t.id===r.type?'selected':''}>${esc(t.name)}</option>`).join('')}</select>`:''}
+    <input type="date" id="rv-from" value="${r.from}" data-chg="rvFrom" title="From">
+    <input type="date" id="rv-to" value="${r.to}" data-chg="rvTo" title="To">
+    <select id="rv-range" data-chg="rvRange"><option value="">Quick range…</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="all">All time</option></select>
+  </div>
+  ${sec('rv-sum', `<h3>Summary</h3>`, `<div class="kpis">
+    <div class="kpi"><div class="kl">Posts</div><div class="kv">${posts}</div></div>
+    <div class="kpi"><div class="kl">Views</div><div class="kv">${fmtNum(views)}</div></div>
+    <div class="kpi"><div class="kl">Avg views / post</div><div class="kv">${posts?fmtNum(views/posts):'—'}</div></div>
+    <div class="kpi"><div class="kl">Follows / subs</div><div class="kv">${fmtNum(sum('follows'))}</div></div>
+    <div class="kpi"><div class="kl">Comments</div><div class="kv">${fmtNum(sum('comments'))}</div></div>
+    <div class="kpi"><div class="kl">Saves</div><div class="kv">${fmtNum(sum('saves'))}</div></div>
+    <div class="kpi"><div class="kl">Shares</div><div class="kv">${fmtNum(sum('shares'))}</div></div>
+    <div class="kpi"><div class="kl">Engagement</div><div class="kv">${engViews?(engT/engViews*100).toFixed(1)+'%':'—'}</div></div>
+  </div>`)}
+  ${sec('rv-best', `<h3>Best performing</h3>`, bestHTML(rows))}
+  ${sec('rv-funnel', `<h3>By funnel</h3>`, `<div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>Funnel</th><th class="num">Posts</th><th class="num">Views</th><th class="num">Avg views</th><th class="num">Follows</th><th class="num">Eng. %</th></tr></thead>
+    <tbody>${byFunnel.map(x=>`<tr><td>${fChip(x.f.id)}</td><td class="num">${x.n}</td><td class="num">${fmtNum(x.v)}</td><td class="num">${x.n?fmtNum(x.v/x.n):'—'}</td><td class="num">${fmtNum(x.fol)}</td><td class="num">${x.eng==null?'—':x.eng.toFixed(1)+'%'}</td></tr>`).join('')}</tbody>
+  </table></div>`, {cls:'flush'})}
+  ${sec('rv-table', `<h3>Every video, every platform</h3><span class="cnt">${rows.length}</span>`, `<div class="tbl-wrap"><table class="tbl">
+    <thead><tr>${th('date','Date','')}${th('title','Video','')}<th>Funnel</th>${th('platform','Platform','')}${th('views','Views')}${th('comments','Comments')}${th('shares','Shares')}${th('saves','Saves')}${th('follows','Follows/Subs')}${th('avgWatch','Avg watch')}${th('eng','Eng. %')}</tr></thead>
+    <tbody>${rows.map(x=>`<tr class="click" data-act="openPost" data-id="${x.p.id}">
+      <td>${x.p.date?fmtDay(x.p.date):'—'}</td><td class="ttl">${esc(x.p.title)}${x.p.repostOf?' <span class="chip">↻ Repost</span>':''}</td><td>${fChip(x.p.funnelId,x.p.typeId)}</td><td>${plat(x.pl).name}</td>
+      ${cell(x.views)}${cell(x.comments)}${cell(x.shares)}${cell(x.saves)}${cell(x.follows)}
+      ${x.avgWatch===undefined?'<td class="num na">·</td>':`<td class="num">${x.avgWatch==null?'<span class="na">—</span>':fmtWatch(x.avgWatch)}</td>`}
+      <td class="num">${x.eng==null?'<span class="na">—</span>':x.eng.toFixed(1)+'%'}</td></tr>`).join('') || `<tr><td colspan="11" class="empty">No posted videos match these filters yet.</td></tr>`}</tbody>
+  </table></div>
+  <p class="tiny" style="margin:10px 18px 0">Engagement % = (comments + shares + saves) ÷ views. “·” means that platform doesn't track the metric. Tap a column to sort, a row to open the post.</p>`, {cls:'flush'})}`;
+}
+
+// =====================================================================
+// WEEKLY REVIEW
+// =====================================================================
+function viewWeekly(){
+  const mon = parseISO(S.wk), sun = addDays(mon,6), end = iso(sun);
+  const posts = S.posts.filter(p=>p.date && p.source!=='manual' && p.date>=S.wk && p.date<=end).sort((a,b)=>a.date.localeCompare(b.date) || byCreated(a,b));
+  const posted = posts.filter(isPosted);
+  const wd = S.weekly.find(w=>w.id===S.wk) || {};
+  const refl = S.reflections.filter(r=>{ const d = iso(new Date(r.createdAt)); return d>=S.wk && d<=end; }).sort((a,b)=>b.createdAt-a.createdAt);
+  const perPlat = PLATFORMS.map(pl => { const ps = posted.filter(p=>p.platforms?.includes(pl.id)); if (!ps.length) return null;
+    const tot = k => ps.reduce((a,p)=>a+(p.stats?.[pl.id]?.[k]||0),0); return {pl, n:ps.length, views:tot('views'), follows:tot('follows'), comments:tot('comments')}; }).filter(Boolean);
+  const best = [...posted].sort((a,b)=>totalViews(b)-totalViews(a))[0];
+  const missing = posted.filter(p=>(p.platforms||[]).some(pl=>p.stats?.[pl]?.views==null)).length;
+  const q = (n,t) => `<div class="q"><b>${n}</b>${t}</div>`;
+  return `
+  <div class="vhead"><h2>Weekly review</h2>
+    <button class="btn sm" data-act="wkrPrev" aria-label="Previous week">‹</button><b>${mon.toLocaleDateString('en-IE',{day:'numeric',month:'short'})} – ${sun.toLocaleDateString('en-IE',{day:'numeric',month:'short',year:'numeric'})}</b><button class="btn sm" data-act="wkrNext" aria-label="Next week">›</button>
+    <button class="btn sm" data-act="wkrNow">This week</button>${allToggle()}</div>
+  <div class="wk-grid">
+    <div>
+      ${sec('wk-1', q(1,"What's going out, and why"), `
+        <div class="wk-mix" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${mixChips(mixCounts(mon))}</div>
+        <div style="margin-bottom:8px">${mixBar(mixCounts(mon))}</div>
+        ${posts.map(p=>{ const f = funnelOf(p.funnelId); return `<div class="wk-item" data-act="openPost" data-id="${p.id}"><div class="sw" style="background:${esc(f.color)}"></div>
+          <div style="flex:1;min-width:0"><div style="font-weight:700">${esc(p.title)}</div><div class="tiny">${fmtDay(p.date)} · ${esc(funnelLabel(p.funnelId,p.typeId))} · ${STATUS_ICON[p.status]} ${esc(p.status)}</div>${p.notes?`<div class="tiny" style="margin-top:2px">${esc(p.notes.slice(0,140))}${p.notes.length>140?'…':''}</div>`:''}</div>
+          <div class="row" style="gap:4px">${platChips(p.platforms)}</div></div>`; }).join('') || `<div class="empty">Nothing planned for this week. <a href="#" data-act="nav" data-v="calendar">Go to the calendar</a></div>`}`)}
+      ${sec('wk-2', q(2,'How it performed'), posted.length ? `
+          ${missing?`<div class="tiny" style="margin-bottom:8px">⚠︎ ${missing} posted video${missing>1?'s are':' is'} missing stats.</div>`:''}
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Platform</th><th class="num">Posts</th><th class="num">Views</th><th class="num">Comments</th><th class="num">Follows/Subs</th></tr></thead>
+          <tbody>${perPlat.map(x=>`<tr><td>${x.pl.name}</td><td class="num">${x.n}</td><td class="num">${fmtNum(x.views)}</td><td class="num">${x.pl.metrics.includes('comments')?fmtNum(x.comments):'·'}</td><td class="num">${fmtNum(x.follows)}</td></tr>`).join('')}</tbody></table></div>
+          ${best&&totalViews(best)?`<p style="margin:10px 0 0">🏆 Top video: <a href="#" data-act="openPost" data-id="${best.id}"><b>${esc(best.title)}</b></a> · ${fmtNum(totalViews(best))} views</p>`:''}`
+        : `<div class="empty">No posted videos this week yet.</div>`)}
+    </div>
+    <div>
+      ${sec('wk-3', q(3,'What we learned'), `<textarea id="wk-learned" rows="4" data-wk-field="learned" placeholder="What worked, what didn't, anything surprising…">${esc(wd.learned||'')}</textarea>`)}
+      ${sec('wk-4', q(4,"What we'll try next"), `<textarea id="wk-next" rows="3" data-wk-field="next" placeholder="One experiment or change for next week…">${esc(wd.next||'')}</textarea>
+        <div class="tiny" style="margin-top:6px">${wd.updatedAt?`Last edited ${fmtDateTime(wd.updatedAt)} by ${esc(wd.updatedBy||'')}`:'Notes save automatically when you tap away.'}</div>`)}
+      ${sec('wk-refl', `<h3>Reflections this week</h3><span class="cnt">${refl.length}</span><button class="btn sm" data-act="nav" data-v="reflections">+ Add</button>`,
+        refl.map(r=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="tiny"><b style="color:var(--ink)">${esc(r.author)}</b> · ${fmtDateTime(r.createdAt)}${r.topic?` · ${esc(r.topic)}`:''}</div><div style="white-space:pre-wrap">${esc(r.text)}</div></div>`).join('') || `<div class="tiny">No reflections logged this week.</div>`)}
+    </div>
+  </div>`;
+}
+
+// =====================================================================
+// PLAN (+ housekeeping)
+// =====================================================================
+function viewPlan(){
+  const col = ([h,label], ix) => {
+    const items = S.plans.filter(p=>p.horizon===h).sort((a,b)=>(a.done-b.done) || byCreated(a,b));
+    return sec(`plan-${h}`, `<h3>${label}</h3><span class="cnt">${items.filter(p=>!p.done).length}</span>`, `
+      ${items.map(p=>`<div class="pnote ${p.done?'done':''}">
+        <div class="ptext">${esc(p.text)}</div>
+        <div class="pmeta"><span>${esc(p.createdBy||'')} · ${new Date(p.createdAt).toLocaleDateString('en-IE',{day:'numeric',month:'short'})}</span><span class="sp"></span>
+          <button class="icon-btn" data-act="planDone" data-id="${p.id}" title="${p.done?'Mark not done':'Mark done'}">${p.done?'↺':'✓'}</button>
+          ${ix>0?`<button class="icon-btn" data-act="planMove" data-id="${p.id}" data-to="${HORIZONS[ix-1][0]}" title="Move to ${HORIZONS[ix-1][1]}">←</button>`:''}
+          ${ix<2?`<button class="icon-btn" data-act="planMove" data-id="${p.id}" data-to="${HORIZONS[ix+1][0]}" title="Move to ${HORIZONS[ix+1][1]}">→</button>`:''}
+          <button class="icon-btn" data-act="planEdit" data-id="${p.id}" title="Edit">✎</button>
+          <button class="icon-btn" data-act="planDel" data-id="${p.id}" title="Delete">🗑</button></div>
+      </div>`).join('') || `<div class="tiny" style="margin-bottom:8px">Nothing here yet.</div>`}
+      <div class="comment-add" style="margin-top:8px"><textarea id="plan-new-${h}" rows="2" placeholder="Add a note…" data-plan-new="${h}"></textarea><button class="btn sm primary" data-act="planAdd" data-h="${h}">Add</button></div>`);
+  };
+  const cl = S.settings.checklist || [];
+  const doneN = cl.filter(c=>c.done).length;
+  return `
+  <div class="vhead"><h2>Plan</h2>${allToggle()}</div>
+  <div class="plan-cols">${HORIZONS.map(col).join('')}</div>
+  <div style="max-width:760px;margin-top:16px">${sec('plan-house', `<h3>Housekeeping checklist</h3><span class="cnt">${doneN}/${cl.length}</span>`, `
+    <p class="tiny" style="margin:0 0 6px">Run through this every quarter so the small details don't slip. Reset it when you start a new round.</p>
+    ${cl.map(c=>`<div class="check-item ${c.done?'done':''}"><input type="checkbox" data-chg="chkToggle" data-id="${c.id}" ${c.done?'checked':''} aria-label="${esc(c.text)}">
+      <div class="ct">${esc(c.text)}${c.done&&c.checkedAt?`<div class="tiny">✓ ${esc(c.checkedBy)} · ${fmtDateTime(c.checkedAt)}</div>`:''}</div>
+      <button class="icon-btn" data-act="chkDel" data-id="${c.id}" title="Remove">✕</button></div>`).join('')}
+    <div class="comment-add" style="margin-top:10px"><input id="chk-new" placeholder="Add a checklist item…"><button class="btn sm" data-act="chkAdd">Add</button><button class="btn sm ghost" data-act="chkReset">Reset all</button></div>`)}</div>`;
+}
+
+// =====================================================================
+// REFLECTIONS
+// =====================================================================
+function viewReflections(){
+  const {author, q} = S.rf; const ql = q.toLowerCase();
+  const list = S.reflections.filter(r => (author==='all' || r.author===author) && (!ql || (r.text+' '+(r.topic||'')).toLowerCase().includes(ql))).sort((a,b)=>b.createdAt-a.createdAt);
+  const topics = [...new Set(S.reflections.map(r=>r.topic).filter(Boolean))].sort();
+  const authors = [...new Set([...S.settings.members.map(m=>m.name), ...S.reflections.map(r=>r.author)].filter(Boolean))];
+  const months = []; list.forEach(r => { const k = new Date(r.createdAt).toLocaleDateString('en-IE',{month:'long',year:'numeric'}); let g = months.find(x=>x.k===k); if (!g) months.push(g = {k, items:[]}); g.items.push(r); });
+  const item = r => `<div class="refl"><span class="avatar">${esc(initials(r.author))}</span><div class="rb">
+      <div class="rh"><b>${esc(r.author)}</b><span class="tiny">${fmtDateTime(r.createdAt)}${r.editedAt?' · edited':''}</span>${r.topic?`<span class="chip">${esc(r.topic)}</span>`:''}</div>
+      <div class="rt">${esc(r.text)}</div></div>
+      <div><button class="icon-btn" data-act="rfEdit" data-id="${r.id}" title="Edit">✎</button><button class="icon-btn" data-act="rfDel" data-id="${r.id}" title="Delete">🗑</button></div></div>`;
+  return `
+  <div class="vhead"><h2>Reflections</h2>${allToggle()}</div>
+  <div style="max-width:820px">
+  ${sec('rf-new', `<h3>New reflection</h3><span class="tiny">posting as <b style="color:var(--mint)">${esc(S.me.name)}</b></span>`, `
+    <div class="field"><textarea id="rf-text" rows="3" placeholder="Anything: a shoot, a result, an idea, how the week went…" aria-label="Reflection"></textarea></div>
+    <div class="row"><input id="rf-topic" list="rf-topics" placeholder="Topic (optional)" style="flex:1;min-width:160px"><datalist id="rf-topics">${topics.map(t=>`<option value="${esc(t)}">`).join('')}</datalist>
+      <button class="btn primary" data-act="rfAdd">Log reflection</button></div>`)}
+  <div class="filters">
+    <select id="rf-author" data-chg="rfAuthor"><option value="all">Everyone</option>${authors.map(a=>`<option ${a===author?'selected':''}>${esc(a)}</option>`).join('')}</select>
+    <input type="text" id="rf-q" placeholder="Search reflections…" value="${esc(q)}" data-inp="rfQ">
+  </div>
+  ${months.map((g,ix)=>sec(`rf-m-${g.k}`, `<h3>${esc(g.k)}</h3><span class="cnt">${g.items.length}</span>`, g.items.map(item).join(''), {def: ix<2})).join('') || `<div class="card empty">No reflections yet.</div>`}
+  </div>`;
+}
+
+// =====================================================================
+// SETTINGS
+// =====================================================================
+function viewSettings(){
+  const s = S.settings;
+  const usage = fid => S.posts.filter(p=>p.funnelId===fid).length + S.ideas.filter(i=>i.funnelId===fid).length;
+  return `
+  <div class="vhead"><h2>Settings</h2>${allToggle()}</div>
+  <div class="set-grid">
+    <div>${sec('set-funnels', `<h3>Funnels &amp; content types</h3>`, `
+      <p class="tiny" style="margin:0 0 12px">Rename, recolour, reorder, add or remove. Changes apply to every past and future post and idea.</p>
+      ${s.funnels.map((f,ix)=>`<div class="fedit">
+        <div class="fh"><input type="color" value="${esc(f.color)}" data-chg="fColor" data-fid="${f.id}" aria-label="Colour"><input value="${esc(f.name)}" data-chg="fName" data-fid="${f.id}" aria-label="Funnel name">
+          <button class="icon-btn" data-act="fUp" data-fid="${f.id}" ${ix===0?'disabled':''} title="Move up">↑</button>
+          <button class="icon-btn" data-act="fDown" data-fid="${f.id}" ${ix===s.funnels.length-1?'disabled':''} title="Move down">↓</button>
+          <button class="icon-btn" data-act="fDel" data-fid="${f.id}" title="Delete funnel">🗑</button></div>
+        <div class="tiny" style="margin-top:4px">${usage(f.id)} posts/ideas use this funnel</div>
+        ${f.types.map((t,tix)=>`<div class="trow"><input value="${esc(t.name)}" data-chg="tName" data-fid="${f.id}" data-tid="${t.id}" aria-label="Content type">
+          <button class="icon-btn" data-act="tUp" data-fid="${f.id}" data-tid="${t.id}" ${tix===0?'disabled':''}>↑</button>
+          <button class="icon-btn" data-act="tDel" data-fid="${f.id}" data-tid="${t.id}" title="Remove type">✕</button></div>`).join('')}
+        <div class="trow"><input placeholder="New content type…" data-newtype="${f.id}"><button class="btn sm" data-act="tAdd" data-fid="${f.id}">Add</button></div>
+      </div>`).join('')}
+      <button class="btn" data-act="fAdd">+ Add funnel</button>`)}</div>
+    <div>
+      ${sec('set-team', `<h3>Team</h3>`, `
+        <p class="tiny" style="margin:0 0 10px">${store.mode==='firebase'?'Names shown on reflections, comments and edits. The email must match the account each person signs in with.':'In demo mode, switch who you are with the name picker at the top.'}</p>
+        ${s.members.map((mb,ix)=>`<div class="trow"><input value="${esc(mb.name)}" placeholder="Name" data-chg="mName" data-ix="${ix}" style="flex:1"><input type="email" value="${esc(mb.email)}" placeholder="Sign-in email" data-chg="mEmail" data-ix="${ix}" style="flex:1.6"><button class="icon-btn" data-act="mDel" data-ix="${ix}">✕</button></div>`).join('')}
+        <button class="btn sm" style="margin-top:8px" data-act="mAdd">+ Add person</button>`)}
+      ${sec('set-timing', `<h3>Timing</h3>`, `
+        <div class="grid2">
+          <div><label class="f" for="set-rw">Ready to repost after (weeks)</label><input id="set-rw" type="number" min="1" value="${s.repostWeeks}" data-chg="repostWeeks"></div>
+          <div><label class="f" for="set-sd">Stats reminder after (days)</label><input id="set-sd" type="number" min="1" value="${s.statsDays}" data-chg="statsDays"></div>
+        </div>`)}
+      ${sec('set-export', `<h3>Backup &amp; export</h3>`, `
+        <div class="row" style="gap:6px">
+          <button class="btn sm" data-act="exportPosts">Posts + stats (CSV)</button>
+          <button class="btn sm" data-act="exportIdeas">Ideas (CSV)</button>
+          <button class="btn sm" data-act="exportRefl">Reflections (CSV)</button>
+          <button class="btn sm" data-act="exportJSON">Full backup (JSON)</button>
+        </div>
+        <p class="tiny" style="margin:8px 0 0">Images aren't included in exports; download them from each post or idea.</p>`)}
+      ${sec('set-account', `<h3>Account</h3>`, `
+        <p class="muted" style="margin:0 0 10px">${store.mode==='firebase'?`Signed in as <b>${esc(S.me.name)}</b> (${esc(S.me.email)})`:'Demo mode: data lives only in this browser.'}</p>
+        <div class="row" style="gap:6px">
+          ${store.mode==='firebase'?`<button class="btn sm" data-act="signOut">Sign out</button>`:`<button class="btn sm danger" data-act="resetDemo">Reset demo data</button>`}
+        </div>`)}
+    </div>
+  </div>`;
+}
+
+const VIEWS = { calendar:viewCalendar, ideas:viewIdeas, library:viewLibrary, stats:viewReview, weekly:viewWeekly, plan:viewPlan, reflections:viewReflections, settings:viewSettings };
+
+// ---------- settings helpers ----------
+async function saveSettings(mut){ const s = clean(S.settings); mut(s); S.settings = s; requestRender(); try { await store.setSettings(s); } catch(e){ toast('Could not save settings: '+e.message,'err'); } }
+const moveIn = (arr, ix, d) => { const j = ix+d; if (j<0||j>=arr.length) return; [arr[ix],arr[j]] = [arr[j],arr[ix]]; };
+
+// ---------- comments ----------
+function threadHTML(pid, ptype){ return `<div class="thread" data-thread="${pid}" data-ptype="${ptype}"></div>`; }
+function renderThread(el){
+  const pid = el.dataset.thread; const list = S.comments.filter(c=>c.parentId===pid).sort(byCreated);
+  const ta = el.querySelector('textarea'); const val = ta?.value || ''; const foc = document.activeElement === ta;
+  el.innerHTML = `<h4>Discussion</h4>${list.map(c=>`<div class="cmt"><span class="avatar">${esc(initials(c.author))}</span><div class="cb"><div class="ch"><b>${esc(c.author)}</b><span class="tiny">${fmtDateTime(c.createdAt)}</span><span style="flex:1"></span>${c.author===S.me.name?`<button class="icon-btn" data-act="cmtDel" data-id="${c.id}" title="Delete">✕</button>`:''}</div><div class="ct">${esc(c.text)}</div></div></div>`).join('') || `<div class="tiny" style="margin-bottom:8px">No comments yet.</div>`}
+    <div class="comment-add"><textarea rows="1" placeholder="Add a comment for ${S.me.name==='Daniel'?'Milo':'the team'}…"></textarea><button class="btn sm primary" data-act="cmtAdd" data-pid="${pid}">Post</button></div>`;
+  const nta = el.querySelector('textarea'); nta.value = val; if (foc) nta.focus();
+}
+function refreshThreads(){ $$('[data-thread]').forEach(renderThread); }
+
+// ---------- modal system ----------
+let modalState = null;
+function openModal(html, {onClose, small}={}){
+  closeModal(false, true);
+  const root = $('#modal-root');
+  root.innerHTML = `<div class="overlay"><div class="modal ${small?'sm':''}" role="dialog" aria-modal="true">${html}</div></div>`;
+  const ov = root.firstElementChild, m = ov.firstElementChild;
+  modalState = {onClose};
+  ov.addEventListener('mousedown', e => { if (e.target === ov) ov._down = true; });
+  ov.addEventListener('click', e => { if (e.target === ov && ov._down) closeModal(false); ov._down = false; });
+  $$('[data-close]', m).forEach(b => b.onclick = () => closeModal(false));
+  document.body.style.overflow = 'hidden';
+  refreshThreads(); hydrate(m);
+  return m;
+}
+function closeModal(saved=false, silent=false){
+  if (!modalState) return; const st = modalState; modalState = null;
+  $('#modal-root').innerHTML = ''; document.body.style.overflow = '';
+  if (st.onClose) st.onClose(saved);
+  if (!silent) requestRender();
+}
+function askConfirm(msg, okLabel='Delete'){
+  return new Promise(res => {
+    const d = document.createElement('div'); d.className = 'overlay'; d.style.zIndex = 80; d.style.alignItems = 'center';
+    d.innerHTML = `<div class="modal sm"><div class="mb">${esc(msg)}</div><div class="mf"><div class="sp"></div><button class="btn" data-no>Cancel</button><button class="btn primary" data-yes>${esc(okLabel)}</button></div></div>`;
+    document.body.appendChild(d);
+    d.querySelector('[data-no]').onclick = () => { d.remove(); res(false); };
+    d.querySelector('[data-yes]').onclick = () => { d.remove(); res(true); };
+  });
+}
+function askChoice(msg, options, okLabel='Continue'){
+  return new Promise(res => {
+    const d = document.createElement('div'); d.className = 'overlay'; d.style.zIndex = 80; d.style.alignItems = 'center';
+    d.innerHTML = `<div class="modal sm"><div class="mb"><p style="margin-top:0">${esc(msg)}</p><select>${options.map(o=>`<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('')}</select></div><div class="mf"><div class="sp"></div><button class="btn" data-no>Cancel</button><button class="btn primary" data-yes>${esc(okLabel)}</button></div></div>`;
+    document.body.appendChild(d);
+    d.querySelector('[data-no]').onclick = () => { d.remove(); res(null); };
+    d.querySelector('[data-yes]').onclick = () => { const v = d.querySelector('select').value; d.remove(); res(v); };
+  });
+}
+function askText(title, value=''){
+  return new Promise(res => {
+    const d = document.createElement('div'); d.className = 'overlay'; d.style.zIndex = 80; d.style.alignItems = 'center';
+    d.innerHTML = `<div class="modal sm"><div class="mh"><h3>${esc(title)}</h3></div><div class="mb"><textarea rows="5"></textarea></div><div class="mf"><div class="sp"></div><button class="btn" data-no>Cancel</button><button class="btn primary" data-yes>Save</button></div></div>`;
+    document.body.appendChild(d); const ta = d.querySelector('textarea'); ta.value = value; ta.focus();
+    d.querySelector('[data-no]').onclick = () => { d.remove(); res(null); };
+    d.querySelector('[data-yes]').onclick = () => { const v = ta.value.trim(); d.remove(); res(v); };
+  });
+}
+async function lightbox(id){ const src = await getImg(id); if (!src) return; const d = document.createElement('div'); d.className = 'lightbox'; d.innerHTML = `<img src="${src}" alt="">`; d.onclick = () => d.remove(); document.body.appendChild(d); }
+
+// ---------- events: clicks ----------
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  const act = t.dataset.act, id = t.dataset.id;
+  if (act === 'extLink') { e.stopPropagation(); return; }
+  if (t.closest('summary') && t.tagName !== 'SUMMARY') e.preventDefault();
+  if (t.tagName === 'A') e.preventDefault();
+  const fid = t.dataset.fid, tid = t.dataset.tid;
+  switch (act) {
+    case 'copyHook': { const h = t.dataset.h; try { await navigator.clipboard.writeText(h); toast('Hook copied'); } catch { toast(h); } break; }
+    case 'repostToday': { const p = S.posts.find(x=>x.id===id); await store.update('posts', id, {lastPosted: todayISO(), repostsManual: (p?.repostsManual||0)+1}); toast('Marked as reposted today'); break; }
+    case 'secAll': { const ds = $$('#view details.sec'); const top = ds.filter(d=>!d.classList.contains('sub')); const open = !top.some(d=>d.open);
+      ds.forEach(d => { d.open = open; OPEN[d.dataset.sec] = open; }); try { localStorage.setItem('verus_sections', JSON.stringify(OPEN)); } catch {} syncAllLabel(); break; }
+    case 'site': S.view = t.dataset.site==='review' ? lastReview : SITES[t.dataset.site].views[0][0]; setHash(S.view); closeModal(false,true); renderShell(); renderView(); window.scrollTo(0,0); break;
+    case 'back': S.view = lastHub; setHash(S.view); closeModal(false,true); renderShell(); renderView(); window.scrollTo(0,0); break;
+    case 'nav': S.view = t.dataset.v; setHash(S.view); closeModal(false,true); renderShell(); renderView(); window.scrollTo(0,0); break;
+    // calendar
+    case 'calPrev': S.cal.month = new Date(S.cal.month.getFullYear(), S.cal.month.getMonth()-1, 1); renderView(); break;
+    case 'calNext': S.cal.month = new Date(S.cal.month.getFullYear(), S.cal.month.getMonth()+1, 1); renderView(); break;
+    case 'calToday': { const n = new Date(); S.cal.month = new Date(n.getFullYear(), n.getMonth(), 1); S.cal.sel = todayISO(); renderView(); break; }
+    case 'wkPrev': case 'wkNext': { const d = addDays(parseISO(S.cal.sel), act==='wkPrev'?-7:7); S.cal.sel = iso(d); S.cal.month = new Date(d.getFullYear(), d.getMonth(), 1); renderView(); break; }
+    case 'toWeekly': S.wk = t.dataset.wk; S.view = 'weekly'; setHash('weekly'); renderShell(); renderView(); window.scrollTo(0,0); break;
+    case 'day': { const ds = t.dataset.date; if (+t.dataset.n === 0 && ds === S.cal.sel) { openPostEditor({date:ds}); break; }
+      if (+t.dataset.n === 0) { S.cal.sel = ds; renderView(); openPostEditor({date:ds}); break; }
+      S.cal.sel = ds; renderView(); if (innerWidth <= 980) $('.side')?.scrollIntoView({behavior:'smooth', block:'start'}); break; }
+    case 'newPost': openPostEditor({date: t.dataset.date || todayISO()}); break;
+    case 'openPost': { e.stopPropagation(); const p = S.posts.find(x=>x.id===id); if (p) openPostEditor(p); break; }
+    case 'newOld': openPostEditor({source:'manual', status:'Posted', platforms:['ig']}); break;
+    // ideas
+    case 'newIdea': openIdeaEditor({funnelId: t.dataset.f || S.settings.funnels[0]?.id}); break;
+    case 'openIdea': { const i = S.ideas.find(x=>x.id===id); if (i) openIdeaEditor(i); break; }
+    // review
+    case 'rvSort': { const k = t.dataset.k; if (S.rv.sort===k) S.rv.dir *= -1; else { S.rv.sort = k; S.rv.dir = ['date','title','platform'].includes(k) ? 1 : -1; } renderView(); break; }
+    // weekly
+    case 'wkrPrev': S.wk = iso(addDays(parseISO(S.wk),-7)); renderView(); break;
+    case 'wkrNext': S.wk = iso(addDays(parseISO(S.wk),7)); renderView(); break;
+    case 'wkrNow': S.wk = iso(mondayOf(new Date())); renderView(); break;
+    // plan
+    case 'planAdd': { const ta = $(`[data-plan-new="${t.dataset.h}"]`); const v = ta.value.trim(); if (!v) return; ta.value='';
+      await store.add('plans', {horizon:t.dataset.h, text:v, done:false, createdBy:S.me.name, createdAt:Date.now()}); break; }
+    case 'planDone': { const p = S.plans.find(x=>x.id===id); await store.update('plans', id, {done:!p.done}); break; }
+    case 'planMove': await store.update('plans', id, {horizon:t.dataset.to}); break;
+    case 'planEdit': { const p = S.plans.find(x=>x.id===id); const v = await askText('Edit note', p.text); if (v) await store.update('plans', id, {text:v, editedAt:Date.now()}); break; }
+    case 'planDel': if (await askConfirm('Delete this note?')) await store.remove('plans', id); break;
+    case 'chkAdd': { const v = $('#chk-new').value.trim(); if (!v) return; await saveSettings(s => s.checklist.push({id:uid(), text:v, done:false, checkedAt:null, checkedBy:''})); break; }
+    case 'chkDel': await saveSettings(s => s.checklist = s.checklist.filter(c=>c.id!==id)); break;
+    case 'chkReset': if (await askConfirm('Untick every checklist item to start a new round?','Reset')) await saveSettings(s => s.checklist.forEach(c=>{c.done=false;c.checkedAt=null;c.checkedBy='';})); break;
+    // reflections
+    case 'rfAdd': { const v = $('#rf-text').value.trim(); if (!v) { toast('Write something first','err'); return; }
+      await store.add('reflections', {text:v, topic:$('#rf-topic').value.trim(), author:S.me.name, authorEmail:S.me.email||'', createdAt:Date.now()});
+      $('#rf-text').value=''; $('#rf-topic').value=''; toast('Reflection logged'); break; }
+    case 'rfEdit': { const r = S.reflections.find(x=>x.id===id); const v = await askText('Edit reflection', r.text); if (v) await store.update('reflections', id, {text:v, editedAt:Date.now()}); break; }
+    case 'rfDel': if (await askConfirm('Delete this reflection?')) await store.remove('reflections', id); break;
+    // comments
+    case 'cmtAdd': { const ta = t.closest('.thread').querySelector('textarea'); const v = ta.value.trim(); if (!v) return; ta.value='';
+      const th = t.closest('.thread'); await store.add('comments', {parentId:t.dataset.pid, parentType:th.dataset.ptype, text:v, author:S.me.name, createdAt:Date.now()}); break; }
+    case 'cmtDel': if (await askConfirm('Delete this comment?')) await store.remove('comments', id); break;
+    // settings: funnels
+    case 'fAdd': await saveSettings(s => s.funnels.push({id:'f_'+uid(), name:'New funnel', color:'#7a5cc2', types:[]})); break;
+    case 'fUp': case 'fDown': await saveSettings(s => moveIn(s.funnels, s.funnels.findIndex(f=>f.id===fid), act==='fUp'?-1:1)); break;
+    case 'fDel': {
+      const f = funnelOf(fid); const used = S.posts.filter(p=>p.funnelId===fid), usedI = S.ideas.filter(i=>i.funnelId===fid);
+      if (S.settings.funnels.length === 1) { toast('Keep at least one funnel','err'); return; }
+      if (used.length || usedI.length) {
+        const to = await askChoice(`"${f.name}" is used by ${used.length} posts and ${usedI.length} ideas. Move them to:`, S.settings.funnels.filter(x=>x.id!==fid).map(x=>({value:x.id,label:x.name})), 'Move & delete');
+        if (!to) return;
+        for (const p of used) await store.update('posts', p.id, {funnelId:to, typeId:''});
+        for (const i of usedI) await store.update('ideas', i.id, {funnelId:to, typeId:''});
+      } else if (!await askConfirm(`Delete the funnel "${f.name}"?`)) return;
+      await saveSettings(s => s.funnels = s.funnels.filter(x=>x.id!==fid)); toast('Funnel deleted'); break;
+    }
+    case 'tAdd': { const inp = $(`[data-newtype="${fid}"]`); const v = inp.value.trim(); if (!v) return; await saveSettings(s => s.funnels.find(f=>f.id===fid).types.push({id:'t_'+uid(), name:v})); break; }
+    case 'tUp': await saveSettings(s => { const f = s.funnels.find(f=>f.id===fid); moveIn(f.types, f.types.findIndex(x=>x.id===tid), -1); }); break;
+    case 'tDel': {
+      const f = funnelOf(fid), tname = typeName(fid,tid);
+      const used = S.posts.filter(p=>p.typeId===tid), usedI = S.ideas.filter(i=>i.typeId===tid);
+      let to = '';
+      if (used.length || usedI.length) {
+        to = await askChoice(`"${tname}" is used by ${used.length} posts and ${usedI.length} ideas. Move them to:`, [{value:'', label:'— No type —'}, ...f.types.filter(x=>x.id!==tid).map(x=>({value:x.id,label:x.name}))], 'Move & remove');
+        if (to === null) return;
+        for (const p of used) await store.update('posts', p.id, {typeId:to});
+        for (const i of usedI) await store.update('ideas', i.id, {typeId:to});
+      } else if (!await askConfirm(`Remove the content type "${tname}"?`,'Remove')) return;
+      await saveSettings(s => { const sf = s.funnels.find(x=>x.id===fid); sf.types = sf.types.filter(x=>x.id!==tid); }); break;
+    }
+    case 'mAdd': await saveSettings(s => s.members.push({name:'', email:''})); break;
+    case 'mDel': if (S.settings.members.length>1 && await askConfirm('Remove this person from the team list?','Remove')) await saveSettings(s => s.members.splice(+t.dataset.ix,1)); break;
+    // export
+    case 'exportPosts': exportPosts(); break;
+    case 'exportIdeas': download('verus-ideas.csv', csv([['Title','Description','Funnel','Type','Series','Research','Status','Created by','Created'], ...S.ideas.map(i=>[i.title,i.description,funnelOf(i.funnelId).name,typeName(i.funnelId,i.typeId),i.series,i.research,i.status,i.createdBy,i.createdAt?new Date(i.createdAt).toISOString():''])]), 'text/csv'); break;
+    case 'exportRefl': download('verus-reflections.csv', csv([['Date','Author','Topic','Reflection'], ...S.reflections.sort((a,b)=>a.createdAt-b.createdAt).map(r=>[new Date(r.createdAt).toISOString(),r.author,r.topic,r.text])]), 'text/csv'); break;
+    case 'exportJSON': download(`verus-hub-backup-${todayISO()}.json`, JSON.stringify({exportedAt:new Date().toISOString(), settings:S.settings, posts:S.posts, ideas:S.ideas, plans:S.plans, reflections:S.reflections, comments:S.comments, weekly:S.weekly}, null, 2), 'application/json'); break;
+    case 'theme': { const order = ['auto','light','dark']; const cur = document.documentElement.dataset.theme || 'auto'; const nx = order[(order.indexOf(cur)+1)%3];
+      if (nx==='auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = nx; try{ localStorage.setItem('verus_theme', nx); }catch{} renderView(); break; }
+    case 'signOut': await AUTH.signOut(); location.reload(); break;
+    case 'resetDemo': if (await askConfirm('Wipe all demo data in this browser and start fresh?','Reset')) store.reset(); break;
+  }
+});
+function dataURLtoBlob(u){ const [h,b] = u.split(','); const mime = (h.match(/:(.*?);/)||[])[1] || 'image/jpeg'; const bin = atob(b); const arr = new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i); return new Blob([arr], {type:mime}); }
+async function importVideos(file){
+  let data; try { data = JSON.parse(await file.text()); } catch { toast("That file isn't a valid import file",'err'); return; }
+  return importVideoData(data);
+}
+async function importVideoData(data){
+  const vids = Array.isArray(data) ? data : (data.videos || []);
+  if (!vids.length) { toast('No videos found in that file','err'); return; }
+  const norm = x => String(x||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  const findF = v => S.settings.funnels.find(f => f.id===v || norm(f.name)===norm(v) || norm(f.name).startsWith(norm(v)+' ') || norm(f.name).split(' ')[0]===norm(v)) || null;
+  const known = new Set(S.posts.map(p => p.link || (norm(p.title)+'|'+(p.date||''))));
+  const missing = [];
+  vids.forEach(v => { const f = findF(v.funnel) || S.settings.funnels[0]; if (v.type && !f.types.some(x => x.id===v.type || norm(x.name)===norm(v.type)) && !missing.some(m=>m.f===f.id && norm(m.n)===norm(v.type))) missing.push({f:f.id, n:v.type}); });
+  if (missing.length) await saveSettings(st => missing.forEach(m => st.funnels.find(f=>f.id===m.f).types.push({id:'t_'+uid(), name:m.n})));
+  let added = 0, skipped = 0;
+  toast(`Importing ${vids.length} videos…`);
+  for (const v of vids) {
+    const key = v.link || (norm(v.title)+'|'+(v.date||''));
+    if (known.has(key)) { skipped++; continue; }
+    if ((added+1) % 20 === 0) toast(`Imported ${added+1} of ${vids.length}…`);
+    const f = findF(v.funnel) || S.settings.funnels[0];
+    const ty = f.types.find(x => x.id===v.type || norm(x.name)===norm(v.type));
+    let thumbId = '';
+    if (v.thumbnail) { try { thumbId = await uploadImage(String(v.thumbnail).startsWith('data:') ? dataURLtoBlob(v.thumbnail) : await (await fetch(v.thumbnail)).blob()); } catch(e){ console.warn('thumb failed', e); } }
+    const plats = (v.platforms||['ig']).map(x=>String(x).toLowerCase()).map(x => ({instagram:'ig',facebook:'fb',tiktok:'tt',youtube:'ytl','youtube shorts':'yts',shorts:'yts'}[x] || x)).filter(x=>plat(x));
+    await store.add('posts', { title: v.title || 'Untitled video', date: v.date || '', lastPosted: v.lastPosted || '', link: v.link || '', funnelId: f.id, typeId: ty?.id || '',
+      status:'Posted', source:'manual', platforms: plats.length?plats:['ig'], notes: v.notes || '', screenshotId:'', thumbId, stats: v.stats || {}, recycle: v.recycle || '',
+      createdBy: S.me.name, createdAt: Date.now() });
+    known.add(key); added++;
+  }
+  toast(`Imported ${added} video${added===1?'':'s'}${skipped?` · skipped ${skipped} already in the library`:''}`);
+}
+function exportPosts(){
+  const head = ['Date','Last posted','Title','Link','Funnel','Type','Status','Platform','Views','Comments','Shares','Saves','Follows/Subs','Avg watch (s)','Times reposted','Next step','Notes'];
+  const rows = [];
+  [...S.posts].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(p => (p.platforms?.length?p.platforms:['']).forEach(pl => { const st = p.stats?.[pl]||{};
+    rows.push([p.date,p.lastPosted,p.title,p.link,funnelOf(p.funnelId).name,typeName(p.funnelId,p.typeId),p.status,plat(pl)?.name||'',st.views,st.comments,st.shares,st.saves,st.follows,st.avgWatch,timesReposted(p),RECYCLE[p.recycle||''],p.notes]); }));
+  download(`verus-posts-${todayISO()}.csv`, csv([head,...rows]), 'text/csv');
+}
+
+// ---------- events: change / input ----------
+document.addEventListener('change', async e => {
+  const t = e.target, k = t.dataset.chg; if (!k) return;
+  const fid = t.dataset.fid, tid = t.dataset.tid;
+  switch (k) {
+    case 'demoUser': S.me = {name:t.value, email:''}; try{ localStorage.setItem('verus_demo_user', t.value); }catch{} renderShell(); renderView(); refreshThreads(); break;
+    case 'idfSeries': S.idf.series = t.value; renderView(); break;
+    case 'idfSched': S.idf.showScheduled = t.checked; renderView(); break;
+    case 'lfFunnel': S.lf.funnel = t.value; renderView(); break;
+    case 'lfRecycle': S.lf.recycle = t.value; renderView(); break;
+    case 'lfSort': S.lf.sort = t.value; renderView(); break;
+    case 'lfReady': S.lf.ready = t.checked; renderView(); break;
+    case 'rvPlatform': S.rv.platform = t.value; renderView(); break;
+    case 'rvFunnel': S.rv.funnel = t.value; S.rv.type = 'all'; renderView(); break;
+    case 'rvType': S.rv.type = t.value; renderView(); break;
+    case 'rvBest': S.rv.best = t.value; renderView(); break;
+    case 'rvFrom': S.rv.from = t.value; renderView(); break;
+    case 'rvTo': S.rv.to = t.value; renderView(); break;
+    case 'rvRange': { const v = t.value; if (v==='all') { S.rv.from=''; S.rv.to=''; } else if (v) { S.rv.from = iso(addDays(new Date(), -(+v))); S.rv.to = todayISO(); } renderView(); break; }
+    case 'rfAuthor': S.rf.author = t.value; renderView(); break;
+    case 'chkToggle': await saveSettings(s => { const c = s.checklist.find(c=>c.id===t.dataset.id); c.done = t.checked; c.checkedAt = t.checked?Date.now():null; c.checkedBy = t.checked?S.me.name:''; }); break;
+    case 'fColor': await saveSettings(s => s.funnels.find(f=>f.id===fid).color = t.value); break;
+    case 'fName': { const v = t.value.trim(); if (!v) { renderView(); return; } await saveSettings(s => s.funnels.find(f=>f.id===fid).name = v); break; }
+    case 'tName': { const v = t.value.trim(); if (!v) { renderView(); return; } await saveSettings(s => s.funnels.find(f=>f.id===fid).types.find(x=>x.id===tid).name = v); break; }
+    case 'mName': await saveSettings(s => s.members[+t.dataset.ix].name = t.value.trim()); if (store.mode==='firebase') resolveMe(); break;
+    case 'mEmail': await saveSettings(s => s.members[+t.dataset.ix].email = t.value.trim().toLowerCase()); if (store.mode==='firebase') resolveMe(); break;
+    case 'repostWeeks': await saveSettings(s => s.repostWeeks = Math.max(1, +t.value || 12)); break;
+    case 'importVideos': { const f = t.files[0]; t.value = ''; if (f) importVideos(f); break; }
+    case 'statsDays': await saveSettings(s => s.statsDays = Math.max(1, +t.value || 7)); break;
+  }
+});
+let inpTimer;
+document.addEventListener('input', e => {
+  const t = e.target, k = t.dataset.inp; if (!k) return;
+  clearTimeout(inpTimer);
+  inpTimer = setTimeout(() => {
+    if (k==='idfQ') S.idf.q = t.value; if (k==='lfQ') S.lf.q = t.value; if (k==='rfQ') S.rf.q = t.value;
+    const pos = t.selectionStart; renderView(); const n = $(`[data-inp="${k}"]`); if (n) { n.focus(); try { n.setSelectionRange(pos,pos); } catch {} }
+  }, 220);
+});
+// weekly notes autosave
+document.addEventListener('focusout', async e => {
+  const t = e.target; const f = t.dataset?.wkField; if (!f) return;
+  const wd = S.weekly.find(w=>w.id===S.wk) || {};
+  if ((wd[f]||'') === t.value) return;
+  const {id:_wid, ...rest} = wd; await store.set('weekly', S.wk, {...rest, [f]: t.value, updatedAt: Date.now(), updatedBy: S.me.name});
+  toast('Saved');
+});
+document.addEventListener('keydown', e => { if (e.key==='Escape') { const lb = $('.lightbox'); if (lb) { lb.remove(); return; } if (modalState && !document.querySelector('body > .overlay')) closeModal(false); } });
+
+// ---------- seeding ----------
+let seeding = false;
+async function seedEverything(){
+  if (seeding) return; seeding = true;
+  const s = defaultSettings(); await store.setSettings(s); S.settings = s;
+  if (!S.me) { resolveMe(); if (!S.me) S.me = {name: s.members[0].name, email:''}; }
+  const now = Date.now();
+  for (const [ix, [funnelId,typeId,title,description,series='',research='']] of SEED_IDEAS.entries())
+    await store.add('ideas', {title, description, funnelId, typeId, series, research, imageIds:[], status:'open', createdBy:'Starter idea', createdAt: now - ix*1000});
+  for (const [ix, [horizon,text]] of SEED_PLANS.entries()) await store.add('plans', {horizon, text, done:false, createdBy:'Milo', createdAt: now + ix});
+  let lib = window.PRELOAD_VIDEOS || null;
+  if (!lib) { try { const r = await fetch('library-seed.json', {cache:'no-store'}); if (r.ok) lib = await r.json(); } catch {} }
+  if (lib) await importVideoData(lib);
+  seeding = false;
+}
+
+// ---------- boot ----------
+let AUTH = null;
+function resolveMe(){
+  if (store.mode !== 'firebase' || !AUTH.user) return;
+  const email = (AUTH.user.email||'').toLowerCase();
+  const m = S.settings?.members.find(x => x.email && x.email.toLowerCase() === email);
+  S.me = {name: m?.name || AUTH.user.displayName || email.split('@')[0], email};
+}
+function startSync(){
+  store.subscribe('settings', async (data, meta) => {
+    if (!data) { if (!meta?.fromCache) await seedEverything(); return; }
+    S.settings = data; S.loaded.add('settings'); resolveMe();
+    if (!S.me) { let n = null; try { n = localStorage.getItem('verus_demo_user'); } catch {} S.me = {name: data.members.find(x=>x.name===n)?.name || data.members[0]?.name || 'Milo', email:''}; }
+    requestRender();
+  });
+  COLLS.forEach(c => store.subscribe(c, list => { S[c] = list; S.loaded.add(c); if (S.settings) requestRender(); }));
+}
+function showDenied(){
+  $('#app').innerHTML = `<div class="card login"><h1>VERUS</h1><p>This account (${esc(AUTH?.user?.email||'')}) isn't on the team list in the Firestore security rules.</p><p class="tiny">Ask Milo to add your email to <code>firestore.rules</code> and publish them again.</p><button class="btn" id="so">Sign out</button></div>`;
+  $('#so').onclick = async () => { await AUTH.signOut(); location.reload(); };
+}
+async function bootFirebase(cfg){
+  const V = '10.12.2', base = `https://www.gstatic.com/firebasejs/${V}/`;
+  const [appM, authM, fs] = await Promise.all([import(base+'firebase-app.js'), import(base+'firebase-auth.js'), import(base+'firebase-firestore.js')]);
+  const app = appM.initializeApp(cfg);
+  let db; try { db = fs.initializeFirestore(app, {localCache: fs.persistentLocalCache({tabManager: fs.persistentMultipleTabManager()})}); } catch { db = fs.getFirestore(app); }
+  const auth = authM.getAuth(app);
+  AUTH = { user:null, signOut: () => authM.signOut(auth) };
+  store = new FirebaseStore({fs, db});
+  let started = false;
+  authM.onAuthStateChanged(auth, user => {
+    AUTH.user = user;
+    if (!user) { started = false; renderLogin(auth, authM); return; }
+    if (!started) { started = true; $('#app').innerHTML = `<div class="loading">Syncing…</div>`; resolveMe(); startSync(); }
+  });
+}
+function renderLogin(auth, authM){
+  $('#app').innerHTML = `<div class="card login">
+    <h1>VERUS</h1><p class="muted" style="margin-top:2px">Content Hub · sign in to continue</p>
+    <button class="btn primary" id="g" style="width:100%;justify-content:center;margin:14px 0">Sign in with Google</button>
+    <div class="tiny" style="text-align:center;margin-bottom:10px">or with email</div>
+    <div class="field"><input id="em" type="email" placeholder="Email" autocomplete="username"></div>
+    <div class="field"><input id="pw" type="password" placeholder="Password" autocomplete="current-password"></div>
+    <button class="btn" id="ep" style="width:100%;justify-content:center">Sign in</button>
+    <div id="lerr" class="err-msg"></div></div>`;
+  const err = e => { console.error(e); $('#lerr').textContent = (e.code||'').replace('auth/','').replace(/-/g,' ') || e.message; };
+  $('#g').onclick = async () => { const prov = new authM.GoogleAuthProvider(); try { await authM.signInWithPopup(auth, prov); } catch(e) {
+    if (['auth/popup-blocked','auth/operation-not-supported-in-this-environment','auth/cancelled-popup-request'].includes(e.code)) authM.signInWithRedirect(auth, prov).catch(err); else err(e); } };
+  $('#ep').onclick = () => authM.signInWithEmailAndPassword(auth, $('#em').value.trim(), $('#pw').value).catch(err);
+  $('#pw').onkeydown = e => { if (e.key==='Enter') $('#ep').click(); };
+}
+(async function boot(){
+  const cfg = window.FIREBASE_CONFIG;
+  if (cfg && cfg.apiKey) {
+    try { await bootFirebase(cfg); }
+    catch(e){ console.error(e); $('#app').innerHTML = `<div class="card login"><h1>VERUS</h1><p>Couldn't connect to Firebase.</p><p class="tiny">${esc(e.message)}</p><p class="tiny">Check firebase-config.js and your internet connection.</p></div>`; }
+  } else { store = new LocalStore(); startSync(); }
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && window.top === window) navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
+</script>
+</body>
+</html>

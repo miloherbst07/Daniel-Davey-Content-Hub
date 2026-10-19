@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Only these sign-in emails can read or write anything. Use lowercase.
+    function isTeam() {
+      return request.auth != null
+        && request.auth.token.email.lower() in [
+          'miloherbst7@gmail.com',
+          'daniel@REPLACE-WITH-DANIELS-EMAIL.com'
+        ];
+    }
+    match /{document=**} {
+      allow read, write: if isTeam();
+    }
+  }
+}
