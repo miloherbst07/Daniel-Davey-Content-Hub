@@ -406,6 +406,7 @@ details.hookbank{margin-bottom:16px}
 .ftotal .kl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:var(--mint)}
 .ftotal b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
 .stale{color:var(--warn)!important;font-weight:600}
+.sitem .tm{color:var(--mint);font-weight:800}
 /* ---------- login ---------- */
 .login{max-width:400px;margin:12vh auto;padding:30px}
 .login h1{font-size:30px;letter-spacing:.16em;font-weight:800}
@@ -747,7 +748,9 @@ function renderView(){
 // =====================================================================
 // CALENDAR
 // =====================================================================
-function postsOn(ds){ return S.posts.filter(p=>p.date===ds && p.source!=='manual').sort(byCreated); }
+const fmtTime = t => { if (!t) return ''; const [h,m] = t.split(':').map(Number); const ap = h>=12?'pm':'am'; const hh = h%12||12; return m ? `${hh}:${String(m).padStart(2,'0')}${ap}` : `${hh}${ap}`; };
+const byTime = (a,b) => (a.time||'99:99').localeCompare(b.time||'99:99') || byCreated(a,b);
+function postsOn(ds){ return S.posts.filter(p=>p.date===ds && p.source!=='manual').sort(byTime); }
 function mixCounts(from, days=7){
   const counts = {}; for (let i=0;i<days;i++){ postsOn(iso(addDays(from,i))).forEach(p=>{ counts[p.funnelId] = (counts[p.funnelId]||0)+1; }); }
   return counts;
@@ -787,6 +790,7 @@ function viewCalendar(){
     <button class="btn sm" data-act="calPrev" aria-label="Previous month">‹</button>
     <button class="btn sm" data-act="calToday">Today</button>
     <button class="btn sm" data-act="calNext" aria-label="Next month">›</button>
+    <span class="btn sm upload-btn">Import schedule<input type="file" data-chg="importVideos"></span>
     <button class="btn primary" data-act="newPost" data-date="${S.cal.sel}">+ Post</button>
   </div>
   <div class="cal-wrap">
@@ -811,7 +815,7 @@ function calSidebar(){
       ${posts.map(p=>{ const f = funnelOf(p.funnelId); return `<div class="sitem" data-act="openPost" data-id="${p.id}">
         <div class="sw" style="background:${esc(f.color)}"></div>
         <div style="min-width:0"><div class="st">${p.repostOf?'↻ ':''}${esc(p.title)}</div>
-        <div class="sm">${esc(funnelLabel(p.funnelId,p.typeId))}</div>
+        <div class="sm"><span>${p.time?`<b class="tm">${fmtTime(p.time)}</b> · `:''}${esc(funnelLabel(p.funnelId,p.typeId))}</span></div>
         <div class="sm"><span>${STATUS_ICON[p.status]||''} ${esc(p.status)}</span>${platChips(p.platforms)}</div></div></div>`; }).join('') || `<div class="tiny" style="padding:0 2px 4px">—</div>`}
     </div>`;
   }
@@ -846,7 +850,7 @@ function openPostEditor(post={}, opts={}){
         <div class="tiny" style="margin-top:4px">It counts as a repost on the original in the Library, so it won't show up twice.</div></div></div>`}
     <div class="field"><label class="f" for="pe-title">Full title</label><input id="pe-title" value="${esc(p.title)}" placeholder="e.g. Myth: carbs at night make you fat"></div>
     <div class="grid2">
-      <div class="field"><label class="f" for="pe-date">${manual?'First posted (optional)':'Posting date'}</label><input id="pe-date" type="date" value="${esc(p.date)}"><div class="tiny" id="pe-date-wk"></div></div>
+      <div class="field"><label class="f" for="pe-date">${manual?'First posted (optional)':'Posting date'}</label><div class="row" style="flex-wrap:nowrap;gap:6px"><input id="pe-date" type="date" value="${esc(p.date)}">${manual?'':`<input id="pe-time" type="time" value="${esc(p.time||'')}" aria-label="Posting time" style="max-width:120px">`}</div><div class="tiny" id="pe-date-wk"></div></div>
       <div class="field"><label class="f">Status</label><select id="pe-status" ${manual?'disabled':''}>${STATUSES.map(s=>`<option ${s===p.status?'selected':''}>${s}</option>`).join('')}</select></div>
     </div>
     <div class="grid2">
@@ -953,7 +957,7 @@ function openPostEditor(post={}, opts={}){
 
   $('#pe-save',m).onclick = async () => {
     readStats();
-    p.title = $('#pe-title',m).value.trim(); p.date = $('#pe-date',m).value; p.status = manual ? 'Posted' : $('#pe-status',m).value;
+    p.title = $('#pe-title',m).value.trim(); p.date = $('#pe-date',m).value; if ($('#pe-time',m)) p.time = $('#pe-time',m).value; p.status = manual ? 'Posted' : $('#pe-status',m).value;
     p.funnelId = $('#pe-funnel',m).value; p.typeId = $('#pe-type',m).value; p.notes = $('#pe-notes',m).value.trim(); p.recycle = $('#pe-recycle',m).value;
     p.lastPosted = $('#pe-last',m).value; let lk = $('#pe-link',m).value.trim(); if (lk && !/^https?:\/\//i.test(lk)) lk = 'https://' + lk; p.link = lk;
     const err = t => { $('#pe-err',m).textContent = t; };
@@ -1413,7 +1417,7 @@ function viewReview(){
 // =====================================================================
 function viewWeekly(){
   const mon = parseISO(S.wk), sun = addDays(mon,6), end = iso(sun);
-  const posts = S.posts.filter(p=>p.date && p.source!=='manual' && p.date>=S.wk && p.date<=end).sort((a,b)=>a.date.localeCompare(b.date) || byCreated(a,b));
+  const posts = S.posts.filter(p=>p.date && p.source!=='manual' && p.date>=S.wk && p.date<=end).sort((a,b)=>a.date.localeCompare(b.date) || byTime(a,b));
   const posted = posts.filter(isPosted);
   const wd = S.weekly.find(w=>w.id===S.wk) || {};
   const refl = S.reflections.filter(r=>{ const d = iso(new Date(r.createdAt)); return d>=S.wk && d<=end; }).sort((a,b)=>b.createdAt-a.createdAt);
@@ -1432,7 +1436,7 @@ function viewWeekly(){
         <div class="wk-mix" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${mixChips(mixCounts(mon))}</div>
         <div style="margin-bottom:8px">${mixBar(mixCounts(mon))}</div>
         ${posts.map(p=>{ const f = funnelOf(p.funnelId); return `<div class="wk-item" data-act="openPost" data-id="${p.id}"><div class="sw" style="background:${esc(f.color)}"></div>
-          <div style="flex:1;min-width:0"><div style="font-weight:700">${esc(p.title)}</div><div class="tiny">${fmtDay(p.date)} · ${esc(funnelLabel(p.funnelId,p.typeId))} · ${STATUS_ICON[p.status]} ${esc(p.status)}</div>${p.notes?`<div class="tiny" style="margin-top:2px">${esc(p.notes.slice(0,140))}${p.notes.length>140?'…':''}</div>`:''}</div>
+          <div style="flex:1;min-width:0"><div style="font-weight:700">${esc(p.title)}</div><div class="tiny">${fmtDay(p.date)}${p.time?' · '+fmtTime(p.time):''} · ${esc(funnelLabel(p.funnelId,p.typeId))} · ${STATUS_ICON[p.status]} ${esc(p.status)}</div>${p.notes?`<div class="tiny" style="margin-top:2px">${esc(p.notes.slice(0,140))}${p.notes.length>140?'…':''}</div>`:''}</div>
           <div class="row" style="gap:4px">${platChips(p.platforms)}</div></div>`; }).join('') || `<div class="empty">Nothing planned for this week. <a href="#" data-act="nav" data-v="calendar">Go to the calendar</a></div>`}`)}
       ${sec('wk-2', q(2,'How it performed'), posted.length ? `
           ${missing?`<div class="tiny" style="margin-bottom:8px">⚠︎ ${missing} posted video${missing>1?'s are':' is'} missing stats.</div>`:''}
@@ -1757,11 +1761,12 @@ async function importVideoData(data){
     if (v.thumbnail) { try { thumbId = await uploadImage(String(v.thumbnail).startsWith('data:') ? dataURLtoBlob(v.thumbnail) : await (await fetch(v.thumbnail)).blob()); } catch(e){ console.warn('thumb failed', e); } }
     const plats = (v.platforms||['ig']).map(x=>String(x).toLowerCase()).map(x => ({instagram:'ig',facebook:'fb',tiktok:'tt',youtube:'ytl','youtube shorts':'yts',shorts:'yts'}[x] || x)).filter(x=>plat(x));
     await store.add('posts', { title: v.title || 'Untitled video', date: v.date || '', lastPosted: v.lastPosted || '', link: v.link || '', funnelId: f.id, typeId: ty?.id || '',
-      status:'Posted', source:'manual', platforms: plats.length?plats:['ig'], notes: v.notes || '', screenshotId:'', thumbId, stats: v.stats || {}, recycle: v.recycle || '',
+      status: STATUSES.includes(v.status) ? v.status : 'Posted', source: v.status && v.status!=='Posted' || v.schedule ? 'calendar' : 'manual', time: v.time || '',
+      platforms: plats.length?plats:['ig'], notes: v.notes || '', screenshotId:'', thumbId, stats: v.stats || {}, recycle: v.recycle || '',
       createdBy: S.me.name, createdAt: Date.now() });
     known.add(key); added++;
   }
-  toast(`Imported ${added} video${added===1?'':'s'}${skipped?` · skipped ${skipped} already in the library`:''}`);
+  toast(`Imported ${added} post${added===1?'':'s'}${skipped?` · skipped ${skipped} already in the hub`:''}`);
 }
 function exportPosts(){
   const head = ['Date','Last posted','Title','Link','Funnel','Type','Status','Platform','Views','Comments','Shares','Saves','Follows/Subs','Avg watch (s)','Times reposted','Next step','Notes'];
