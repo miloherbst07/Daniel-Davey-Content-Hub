@@ -420,6 +420,8 @@ details.wwcard>summary h3{flex:1 1 220px}
 .ww-badge.created{color:var(--warn);border-color:rgba(240,184,90,.45);background:rgba(240,184,90,.08)}
 .ww-badge.used{color:var(--mint);border-color:rgba(95,209,167,.45);background:var(--mintSoft)}
 details.wwcard.ww-not{box-shadow:inset 3px 0 0 var(--line2)} details.wwcard.ww-created{box-shadow:inset 3px 0 0 var(--warn)} details.wwcard.ww-used{box-shadow:inset 3px 0 0 var(--mint)}
+.who-tabs{align-items:center}.who-l{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-right:4px}
+.who-tabs button{display:inline-flex;align-items:center;gap:6px}.avatar.xs{width:18px;height:18px;font-size:9px}
 .car-box{margin:14px 0 4px;padding:12px 14px;border:1px solid var(--line);border-radius:12px}
 .car-row{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin-top:8px;border:1px solid var(--line);border-radius:10px;flex-wrap:wrap}
 .car-main{flex:1 1 260px;min-width:0}.car-t{font-weight:800;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -694,7 +696,8 @@ const S = {
   settings:null, followers:[], weeklyword:[], youtube:[], wwf:'all', wwq:'', ytq:'', posts:[], ideas:[], plans:[], reflections:[], comments:[], weekly:[],
   me:null, view: (h => ({review:'stats'})[h] || (h && h in {calendar:1,ideas:1,youtube:1,word:1,stats:1,library:1,weekly:1,plan:1,reflections:1,settings:1} ? h : 'calendar'))(location.hash.slice(1)), loaded:new Set(),
   cal:{ month: new Date(new Date().getFullYear(), new Date().getMonth(), 1), sel: todayISO() },
-  idf:{ q:'', series:'', showScheduled:false, review:'all' },
+  idf:{ q:'', series:'', showScheduled:false, review:'all', who:(()=>{ try{ return localStorage.getItem('verus_idwho')||'all'; }catch{ return 'all'; } })() },
+  ytwho:(()=>{ try{ return localStorage.getItem('verus_ytwho')||'all'; }catch{ return 'all'; } })(),
   lf:{ funnel:'all', recycle:'all', ready:false, sort:'new', q:'' },
   rv:{ platform:'all', funnel:'all', type:'all', from:'', to:'', sort:'views', dir:-1, best:'views' },
   wk: iso(mondayOf(new Date())),
@@ -1046,6 +1049,12 @@ function reviewTabs(items, cur, act){
   const c = k => items.filter(x=>revOf(x)===k).length;
   return `<div class="ww-filters rv-tabs" role="tablist"><button class="${cur==='all'?'on':''}" data-act="${act}" data-f="all">All <span>${items.length}</span></button>${REVIEW.map(([k,l])=>`<button class="${cur===k?'on':''} rv-${k}" data-act="${act}" data-f="${k}">${REV_ICON[k]} ${l} <span>${c(k)}</span></button>`).join('')}</div>`;
 }
+function whoTabs(items, cur, act){
+  const names = [...new Set([...(S.settings.members||[]).map(m=>m.name).filter(Boolean), ...items.map(x=>x.createdBy||'').filter(Boolean)])];
+  const c = n => items.filter(x=>(x.createdBy||'')===n).length;
+  return `<div class="ww-filters who-tabs" role="tablist"><span class="who-l">Made by</span><button class="${cur==='all'?'on':''}" data-act="${act}" data-who="all">Everyone <span>${items.length}</span></button>${names.filter(n=>c(n) || (S.settings.members||[]).some(m=>m.name===n)).map(n=>`<button class="${cur===n?'on':''}" data-act="${act}" data-who="${esc(n)}"><span class="avatar xs">${esc(initials(n))}</span>${esc(n)} <span>${c(n)}</span></button>`).join('')}</div>`;
+}
+const byWho = (x, who) => who==='all' || (x.createdBy||'')===who;
 const reviewBadge = x => { const k = revOf(x); return k==='unfiltered' ? '' : `<span class="rvb ${k}">${REV_ICON[k]} ${revLabel(k)}</span>`; };
 const quickReview = (x, coll) => `<span class="qrev">${REVIEW.filter(([k])=>k!=='unfiltered').map(([k,l])=>`<button type="button" class="qr ${k} ${revOf(x)===k?'on':''}" data-act="quickReview" data-coll="${coll}" data-id="${x.id}" data-r="${k}" title="${l}" aria-label="${l}">${REV_ICON[k]}</button>`).join('')}</span>`;
 function reviewPicker(cur, note){
@@ -1136,8 +1145,9 @@ function hookBank(){
 }
 
 function viewIdeas(){
-  const {q, series, showScheduled} = S.idf; const ql = q.toLowerCase(); const rv = S.idf.review || 'all';
-  const base = S.ideas.filter(i => (showScheduled || i.status!=='scheduled') && (!series || i.series===series) &&
+  const {q, series, showScheduled} = S.idf; const ql = q.toLowerCase(); const rv = S.idf.review || 'all'; const who = S.idf.who || 'all';
+  const pre = S.ideas.filter(i => (showScheduled || i.status!=='scheduled'));
+  const base = pre.filter(i => byWho(i, who) && (showScheduled || i.status!=='scheduled') && (!series || i.series===series) &&
     (!ql || [i.title,i.description,i.series,i.research,i.notes,i.facts,i.locations,i.hook].join(' ').toLowerCase().includes(ql)));
   const list = base.filter(i => rv==='all' || revOf(i)===rv);
   const funnels = [...S.settings.funnels];
@@ -1155,6 +1165,7 @@ function viewIdeas(){
   return `
   <div class="vhead"><h2>Ideas</h2>${allToggle()}<span class="btn sm upload-btn">Import ideas<input type="file" data-chg="importVideos"></span><button class="btn primary" data-act="newIdea">+ New idea</button></div>
   ${hookBank()}
+  ${whoTabs(pre, who, 'idfWho')}
   ${reviewTabs(base, rv, 'idfReview')}
   <div class="filters">
     <input type="text" id="idf-q" placeholder="Search ideas…" value="${esc(q)}" data-inp="idfQ">
@@ -1379,8 +1390,8 @@ const YT_STARTERS = [
   ['Building an athlete: 90 days with VERUS','Client case study','Follow one athlete through the 90-Day Programme: intake, plan, check-ins, results. Needs written permission (parental consent if under 18).'],
 ];
 function viewYouTube(){
-  const ql = (S.ytq||'').toLowerCase(); const rv = S.ytf || 'all';
-  const base = S.youtube.filter(y => !ql || [y.title,y.angle,y.outline,y.format,y.notes,y.facts,y.locations,y.hook].join(' ').toLowerCase().includes(ql));
+  const ql = (S.ytq||'').toLowerCase(); const rv = S.ytf || 'all'; const who = S.ytwho || 'all';
+  const base = S.youtube.filter(y => byWho(y, who) && (!ql || [y.title,y.angle,y.outline,y.format,y.notes,y.facts,y.locations,y.hook].join(' ').toLowerCase().includes(ql)));
   const all = base.filter(y => rv==='all' || revOf(y)===rv);
   const card = y => { const img = y.imageIds?.[0]; const shorts = (y.shorts||'').split('\n').filter(s=>s.trim()).length;
     return `<div class="icard ytcard rvc-${revOf(y)}" data-act="ytOpen" data-id="${y.id}">
@@ -1393,6 +1404,7 @@ function viewYouTube(){
       items.length ? `<div class="ytgrid">${items.map(card).join('')}</div>` : `<div class="tiny">Nothing at this stage.</div>`, {def: k!=='published' || items.length>0}); }).join('');
   return `
   <div class="vhead"><h2>YouTube</h2><span class="muted">Long-form ideas, from first thought to published</span>${allToggle()}<span class="btn sm upload-btn">Import ideas<input type="file" data-chg="importVideos"></span><button class="btn primary" data-act="ytNew">+ YouTube idea</button></div>
+  ${whoTabs(S.youtube, who, 'ytWho')}
   ${reviewTabs(base, rv, 'ytReview')}
   <div class="filters"><input type="text" id="yt-q" placeholder="Search YouTube ideas…" value="${esc(S.ytq||'')}" data-inp="ytQ"></div>
   ${S.youtube.length ? groups : `<div class="card empty">No long-form ideas yet. Add your own with “+ YouTube idea”, or <button class="btn sm" data-act="ytStarters">add 6 starter ideas</button> to get going.</div>`}`;
@@ -1969,6 +1981,8 @@ document.addEventListener('click', async e => {
     // ideas
     case 'idfReview': S.idf.review = t.dataset.f; renderView(); break;
     case 'ytReview': S.ytf = t.dataset.f; renderView(); break;
+    case 'idfWho': S.idf.who = t.dataset.who; try{ localStorage.setItem('verus_idwho', S.idf.who); }catch{} renderView(); break;
+    case 'ytWho': S.ytwho = t.dataset.who; try{ localStorage.setItem('verus_ytwho', S.ytwho); }catch{} renderView(); break;
     case 'quickReview': { e.stopPropagation(); const coll = t.dataset.coll; const x = S[coll].find(z=>z.id===id); if (!x) break;
       const r = revOf(x)===t.dataset.r ? 'unfiltered' : t.dataset.r; await store.update(coll, id, {review:r}); toast(r==='unfiltered' ? 'Moved back to Unfiltered' : `Moved to ${revLabel(r)}`); break; }
     case 'wwNew': openWordEditor(); break;
