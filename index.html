@@ -407,6 +407,27 @@ details.hookbank{margin-bottom:16px}
 .ftotal b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
 .stale{color:var(--warn)!important;font-weight:600}
 .sitem .tm{color:var(--mint);font-weight:800}
+/* ---------- weekly word ---------- */
+.ww-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.ww-filters button{border:1px solid var(--line2);background:var(--panel2);color:var(--ink2);border-radius:999px;padding:7px 13px;font-weight:700;font-size:13px;cursor:pointer}
+.ww-filters button span{margin-left:4px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.ww-filters button.on{background:var(--mintSoft);border-color:rgba(95,209,167,.55);color:var(--mint)}
+.wwlist{display:flex;flex-direction:column}
+details.wwcard>summary{flex-wrap:wrap;row-gap:4px}
+details.wwcard>summary h3{flex:1 1 220px}
+.ww-date{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mint);white-space:nowrap}
+.ww-badge{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+.ww-badge.created{color:var(--warn);border-color:rgba(240,184,90,.45);background:rgba(240,184,90,.08)}
+.ww-badge.used{color:var(--mint);border-color:rgba(95,209,167,.45);background:var(--mintSoft)}
+details.wwcard.ww-not{box-shadow:inset 3px 0 0 var(--line2)} details.wwcard.ww-created{box-shadow:inset 3px 0 0 var(--warn)} details.wwcard.ww-used{box-shadow:inset 3px 0 0 var(--mint)}
+.ww-text{white-space:pre-wrap;word-break:break-word;line-height:1.6;max-width:72ch;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:14px 16px;max-height:420px;overflow:auto}
+.ww-st{width:auto;min-height:32px;padding:4px 10px;font-size:12.5px}
+/* ---------- youtube ---------- */
+.ytgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
+@media (max-width:480px){.ytgrid{grid-template-columns:1fr}}
+.ytgrid .icard{margin:0}
+.ytcard img{width:96px}
+.yt-step{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:11.5px;font-weight:800;background:var(--mintSoft);color:var(--mint);border:1px solid rgba(95,209,167,.35)}
 /* ---------- login ---------- */
 .login{max-width:400px;margin:12vh auto;padding:30px}
 .login h1{font-size:30px;letter-spacing:.16em;font-weight:800}
@@ -588,7 +609,7 @@ function compressImage(file, max, quality) {
 }
 
 // ---------- stores ----------
-const COLLS = ['posts','ideas','plans','reflections','comments','weekly','followers'];
+const COLLS = ['posts','ideas','plans','reflections','comments','weekly','followers','weeklyword','youtube'];
 
 const idb = {
   _db:null, mem:new Map(),
@@ -642,8 +663,8 @@ class FirebaseStore {
 // ---------- app state ----------
 let store = null;
 const S = {
-  settings:null, followers:[], posts:[], ideas:[], plans:[], reflections:[], comments:[], weekly:[],
-  me:null, view: (h => ({review:'stats'})[h] || (h && h in {calendar:1,ideas:1,stats:1,library:1,weekly:1,plan:1,reflections:1,settings:1} ? h : 'calendar'))(location.hash.slice(1)), loaded:new Set(),
+  settings:null, followers:[], weeklyword:[], youtube:[], wwf:'all', wwq:'', ytq:'', posts:[], ideas:[], plans:[], reflections:[], comments:[], weekly:[],
+  me:null, view: (h => ({review:'stats'})[h] || (h && h in {calendar:1,ideas:1,youtube:1,word:1,stats:1,library:1,weekly:1,plan:1,reflections:1,settings:1} ? h : 'calendar'))(location.hash.slice(1)), loaded:new Set(),
   cal:{ month: new Date(new Date().getFullYear(), new Date().getMonth(), 1), sel: todayISO() },
   idf:{ q:'', series:'', showScheduled:false },
   lf:{ funnel:'all', recycle:'all', ready:false, sort:'new', q:'' },
@@ -701,7 +722,7 @@ document.addEventListener('focusout', e => { if (deferred && $('#view')?.contain
 
 // ---------- shell ----------
 // Main hub tabs, plus three pages that open on their own (Library, Review, Settings)
-const HUB = [['calendar','Calendar'],['ideas','Ideas'],['stats','Stats']];
+const HUB = [['calendar','Calendar'],['ideas','Ideas'],['youtube','YouTube'],['word','Weekly Word'],['stats','Stats']];
 const SITES = {
   library: {title:'Library', views:[['library','Library']]},
   review:  {title:'Review', views:[['weekly','Weekly'],['plan','Plan'],['reflections','Reflections']]},
@@ -1156,6 +1177,169 @@ function openIdeaEditor(idea={}){
 }
 
 // =====================================================================
+// WEEKLY WORD (Daniel's weekly newsletter → carousels)
+// =====================================================================
+const WW_STATUS = [['not','Carousel not created'],['created','Carousel created'],['used','Used as a carousel']];
+const wwLabel = k => (WW_STATUS.find(x=>x[0]===k)||WW_STATUS[0])[1];
+const wwPrompt = w => `Below is Daniel Davey's "Weekly Word" from ${w.date ? fmtDate(w.date) : 'this week'}. Daniel is a performance nutritionist; VERUS Performance helps athletes become elite through nutrition, mindset, recovery, training and sleep.
+
+Turn it into an Instagram carousel for VERUS:
+- 6 to 8 slides
+- Slide 1: a scroll-stopping hook (max 8 words)
+- One idea per slide, short punchy lines, in Daniel's voice
+- Last slide: a save/share line plus a call to action (comment a keyword or "apply via link in bio")
+- Then write the caption (with a question to drive comments) and 5 relevant hashtags
+- Finally, suggest 2 short reel ideas that could come from the same piece
+
+WEEKLY WORD${w.title ? ` – ${w.title}` : ''}:
+${w.text}`;
+async function copyText(txt, label){
+  try { await navigator.clipboard.writeText(txt); toast(label || 'Copied'); }
+  catch {
+    const m = openModal(`<div class="mh"><h3>Copy this</h3><button class="icon-btn" data-close>✕</button></div><div class="mb"><p class="tiny" style="margin:0 0 8px">Your browser blocked automatic copying. The text is selected below: press Cmd/Ctrl + C.</p><textarea id="cp-txt" rows="14" readonly></textarea></div>`, {small:true});
+    const ta = $('#cp-txt', m); ta.value = txt; ta.focus(); ta.select();
+  }
+}
+function viewWord(){
+  const f = S.wwf || 'all'; const ql = (S.wwq||'').toLowerCase();
+  const all = [...S.weeklyword].sort((a,b)=>(b.date||'').localeCompare(a.date||'') || (b.createdAt||0)-(a.createdAt||0));
+  const counts = Object.fromEntries(WW_STATUS.map(([k])=>[k, all.filter(w=>(w.status||'not')===k).length]));
+  const list = all.filter(w => (f==='all' || (w.status||'not')===f) && (!ql || [w.title,w.text].join(' ').toLowerCase().includes(ql)));
+  const card = w => { const st = w.status||'not';
+    return `<details class="wwcard sec card ${'ww-'+st}" data-sec="ww-${w.id}" ${isOpen('ww-'+w.id, false)?'open':''}>
+      <summary class="sec-h"><span class="ww-date">${w.date?fmtDate(w.date):'No date'}</span><h3>${esc(w.title || (w.text||'').split('\n')[0].slice(0,70) || 'Weekly Word')}</h3>
+        <span class="ww-badge ${st}">${esc(wwLabel(st))}</span><span class="chev" aria-hidden="true"></span></summary>
+      <div class="sec-b">
+        <div class="ww-text">${esc(w.text||'')}</div>
+        <div class="tiny" style="margin:10px 0">${esc(w.createdBy||'')}${w.createdAt?` · added ${fmtDateTime(w.createdAt)}`:''}${w.updatedAt?` · edited`:''}${(w.text||'').trim()?` · ${(w.text||'').trim().split(/\s+/).length} words`:''}</div>
+        <div class="row" style="gap:6px">
+          <button class="btn sm primary" data-act="wwClaude" data-id="${w.id}">Copy for Claude (carousel)</button>
+          <button class="btn sm" data-act="wwCopy" data-id="${w.id}">Copy text</button>
+          <select class="ww-st" data-chg="wwStatus" data-id="${w.id}" aria-label="Carousel status">${WW_STATUS.map(([k,l])=>`<option value="${k}" ${k===st?'selected':''}>${l}</option>`).join('')}</select>
+          <button class="btn sm ghost" data-act="wwEdit" data-id="${w.id}">Edit</button>
+        </div>
+        ${threadHTML(w.id,'word')}
+      </div></details>`; };
+  return `
+  <div class="vhead"><h2>Weekly Word</h2>${allToggle()}<button class="btn primary" data-act="wwNew">+ Add Weekly Word</button></div>
+  <div class="ww-filters" role="tablist">
+    <button class="${f==='all'?'on':''}" data-act="wwFilter" data-f="all">All <span>${all.length}</span></button>
+    ${WW_STATUS.map(([k,l])=>`<button class="${f===k?'on':''} f-${k}" data-act="wwFilter" data-f="${k}">${l} <span>${counts[k]}</span></button>`).join('')}
+  </div>
+  <div class="filters"><input type="text" id="ww-q" placeholder="Search the Weekly Words…" value="${esc(S.wwq||'')}" data-inp="wwQ"></div>
+  ${list.length ? `<div class="wwlist">${list.map(card).join('')}</div>` : `<div class="card empty">${all.length ? 'Nothing matches this filter.' : 'No Weekly Words yet. Daniel can add each one with “+ Add Weekly Word”: paste it in with the date it was written.'}</div>`}`;
+}
+function openWordEditor(w){
+  const isNew = !w; const d = w ? {...w} : {date: todayISO(), title:'', text:'', status:'not'};
+  const m = openModal(`<div class="mh"><h3>${isNew?'Add Weekly Word':'Edit Weekly Word'}</h3><button class="icon-btn" data-close>✕</button></div>
+    <div class="mb">
+      <div class="grid2">
+        <div class="field"><label class="f" for="ww-date">Date written</label><input id="ww-date" type="date" value="${esc(d.date||'')}"></div>
+        <div class="field"><label class="f" for="ww-status">Carousel</label><select id="ww-status">${WW_STATUS.map(([k,l])=>`<option value="${k}" ${k===(d.status||'not')?'selected':''}>${l}</option>`).join('')}</select></div>
+      </div>
+      <div class="field"><label class="f" for="ww-title">Title (optional)</label><input id="ww-title" value="${esc(d.title||'')}" placeholder="e.g. The power of routine"></div>
+      <div class="field"><label class="f" for="ww-text">Weekly Word</label><textarea id="ww-text" rows="14" placeholder="Paste the Weekly Word here…">${esc(d.text||'')}</textarea></div>
+      <div id="ww-err" class="err-msg"></div>
+    </div>
+    <div class="mf">${isNew?'':`<button class="btn danger" id="ww-del">Delete</button>`}<div class="sp"></div><button class="btn" data-close>Cancel</button><button class="btn primary" id="ww-save">Save</button></div>`);
+  $('#ww-save',m).onclick = async () => {
+    const data = {date: $('#ww-date',m).value, title: $('#ww-title',m).value.trim(), text: $('#ww-text',m).value.trim(), status: $('#ww-status',m).value};
+    if (!data.text) { $('#ww-err',m).textContent = 'Paste in the Weekly Word first.'; return; }
+    if (!data.date) { $('#ww-err',m).textContent = 'Add the date it was written.'; return; }
+    if (isNew) { data.createdAt = Date.now(); data.createdBy = S.me.name; await store.add('weeklyword', data); }
+    else { await store.update('weeklyword', d.id, {...data, updatedAt: Date.now()}); }
+    closeModal(true); toast('Saved');
+  };
+  const del = $('#ww-del',m); if (del) del.onclick = async () => { if (!await askConfirm('Delete this Weekly Word?')) return; await store.remove('weeklyword', d.id); for (const c of S.comments.filter(c=>c.parentId===d.id)) await store.remove('comments', c.id); closeModal(true); toast('Deleted'); };
+  setTimeout(()=>$(isNew?'#ww-text':'#ww-title',m)?.focus(), 30);
+}
+
+// =====================================================================
+// YOUTUBE (long-form ideas)
+// =====================================================================
+const YT_STAGES = [['idea','Ideas'],['research','Researching'],['scripted','Scripted'],['filmed','Filmed'],['edited','Edited'],['published','Published']];
+const YT_FORMATS = ['Deep dive / explainer','Full day of eating','Nutritionist reacts','Q&A','Interview / guest','Client case study','Behind the scenes / vlog','Cook-along','Podcast episode','Other'];
+const YT_STARTERS = [
+  ['Full day of eating: county footballer','Full day of eating','Follow a county player from breakfast to bed on a training day, with Daniel explaining every choice. Cut 5–8 Shorts from it.'],
+  ['The 24-hour post-match recovery protocol','Deep dive / explainer','Exactly what to eat, drink and do in the 24 hours after a game: the first hour, the evening meal, sleep, and the next day.'],
+  ['How to eat around double sessions','Deep dive / explainer','Gym plus pitch on the same day: timing, snacks, what to eat between sessions and how to recover.'],
+  ['Nutritionist reacts to pro athletes\' diets','Nutritionist reacts','React to well-known athletes\' "what I eat in a day" videos: what they get right, what young athletes shouldn\'t copy.'],
+  ['Match-day fuelling: 48 hours to the final whistle','Deep dive / explainer','The full match-day timeline in one video, with on-screen graphics. A long-form version of the carousel.'],
+  ['Building an athlete: 90 days with VERUS','Client case study','Follow one athlete through the 90-Day Programme: intake, plan, check-ins, results. Needs written permission (parental consent if under 18).'],
+];
+function viewYouTube(){
+  const ql = (S.ytq||'').toLowerCase();
+  const all = S.youtube.filter(y => !ql || [y.title,y.angle,y.outline,y.format].join(' ').toLowerCase().includes(ql));
+  const card = y => { const img = y.imageIds?.[0]; const shorts = (y.shorts||'').split('\n').filter(s=>s.trim()).length;
+    return `<div class="icard ytcard" data-act="ytOpen" data-id="${y.id}">
+      <div class="ib"><div class="it">${esc(y.title)}</div>${y.angle?`<div class="id">${esc(y.angle)}</div>`:''}
+      <div class="im">${y.format?`<span class="chip">${esc(y.format)}</span>`:''}${y.length?`<span class="chip">⏱ ${esc(y.length)}</span>`:''}${shorts?`<span class="chip">✂️ ${shorts} Shorts</span>`:''}${y.publishDate?`<span class="chip">📅 ${fmtDate(y.publishDate)}</span>`:''}${S.comments.filter(c=>c.parentId===y.id).length?`<span class="chip">💬 ${S.comments.filter(c=>c.parentId===y.id).length}</span>`:''}<span class="tiny">${esc(y.createdBy||'')}</span></div></div>
+      ${img?`<img data-img="${thumb(img)}" alt="">`:''}</div>`; };
+  const groups = YT_STAGES.map(([k,l],ix) => { const items = all.filter(y=>(y.stage||'idea')===k).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    return sec(`yt-${k}`, `<span class="yt-step">${ix+1}</span><h3>${l}</h3><span class="cnt">${items.length}</span>${k==='idea'?`<button class="icon-btn add" data-act="ytNew" title="Add a YouTube idea">＋</button>`:''}`,
+      items.length ? `<div class="ytgrid">${items.map(card).join('')}</div>` : `<div class="tiny">Nothing at this stage.</div>`, {def: k!=='published' || items.length>0}); }).join('');
+  return `
+  <div class="vhead"><h2>YouTube</h2><span class="muted">Long-form ideas, from first thought to published</span>${allToggle()}<button class="btn primary" data-act="ytNew">+ YouTube idea</button></div>
+  <div class="filters"><input type="text" id="yt-q" placeholder="Search YouTube ideas…" value="${esc(S.ytq||'')}" data-inp="ytQ"></div>
+  ${S.youtube.length ? groups : `<div class="card empty">No long-form ideas yet. Add your own with “+ YouTube idea”, or <button class="btn sm" data-act="ytStarters">add 6 starter ideas</button> to get going.</div>`}`;
+}
+function openYTEditor(y={}){
+  const isNew = !y.id;
+  const d = clean({title:'', angle:'', format:'', length:'', stage:'idea', audience:'', titleOptions:'', outline:'', research:'', shorts:'', publishDate:'', link:'', imageIds:[], ...y});
+  const fresh = new Set(), toDelete = new Set();
+  const m = openModal(`<div class="mh"><h3>${isNew?'New YouTube idea':'YouTube idea'}</h3><button class="icon-btn" data-close>✕</button></div>
+  <div class="mb">
+    <div class="field"><label class="f" for="yt-title">Working title</label><input id="yt-title" value="${esc(d.title)}" placeholder="e.g. Full day of eating: county footballer"></div>
+    <div class="field"><label class="f" for="yt-angle">The idea / angle</label><textarea id="yt-angle" rows="3" placeholder="What's the video about and why would someone watch to the end?">${esc(d.angle)}</textarea></div>
+    <div class="grid3">
+      <div class="field"><label class="f" for="yt-stage">Stage</label><select id="yt-stage">${YT_STAGES.map(([k,l])=>`<option value="${k}" ${k===d.stage?'selected':''}>${l==='Ideas'?'Idea':l}</option>`).join('')}</select></div>
+      <div class="field"><label class="f" for="yt-format">Format</label><select id="yt-format"><option value="">—</option>${YT_FORMATS.map(f=>`<option ${f===d.format?'selected':''}>${f}</option>`).join('')}</select></div>
+      <div class="field"><label class="f" for="yt-length">Target length</label><input id="yt-length" value="${esc(d.length)}" placeholder="e.g. 12–15 min"></div>
+    </div>
+    <div class="field"><label class="f" for="yt-aud">Who it's for</label><input id="yt-aud" value="${esc(d.audience)}" placeholder="e.g. GAA players 16–24, parents of young athletes"></div>
+    <div class="field"><label class="f" for="yt-titles">Title & thumbnail options</label><textarea id="yt-titles" rows="3" placeholder="One per line, e.g. I followed a county footballer for 24 hours…">${esc(d.titleOptions)}</textarea></div>
+    <div class="field"><label class="f" for="yt-outline">Outline / talking points / chapters</label><textarea id="yt-outline" rows="6" placeholder="Hook (first 30 seconds)…&#10;Chapter 1…&#10;Chapter 2…&#10;Call to action…">${esc(d.outline)}</textarea></div>
+    <div class="field"><label class="f" for="yt-research">Research, references & links</label><textarea id="yt-research" rows="3" placeholder="Studies, reference videos, guests to ask…">${esc(d.research)}</textarea></div>
+    <div class="field"><label class="f" for="yt-shorts">Shorts / reels to cut from it</label><textarea id="yt-shorts" rows="3" placeholder="One per line">${esc(d.shorts)}</textarea></div>
+    <div class="grid2">
+      <div class="field"><label class="f" for="yt-date">Planned publish date</label><input id="yt-date" type="date" value="${esc(d.publishDate)}"></div>
+      <div class="field"><label class="f" for="yt-link">YouTube link (once live)</label><input id="yt-link" type="url" value="${esc(d.link)}" placeholder="https://youtu.be/…"></div>
+    </div>
+    <div class="field"><label class="f">Thumbnail ideas & reference images</label><div id="yt-gal"></div></div>
+    <div id="yt-err" class="err-msg"></div>
+    ${isNew ? `<div class="thread tiny">Save first to start a discussion on this idea.</div>` : threadHTML(d.id,'youtube')}
+  </div>
+  <div class="mf">${isNew?'':`<button class="btn danger" id="yt-del">Delete</button>`}<div class="sp"></div>${d.link?`<a class="btn" href="${esc(d.link)}" target="_blank" rel="noopener">Watch ↗</a>`:''}<button class="btn" data-close>Cancel</button><button class="btn primary" id="yt-save">${isNew?'Add idea':'Save'}</button></div>`,
+  { onClose: async saved => { if (!saved) for (const id of fresh) await deleteImage(id); } });
+  const gal = () => { const el = $('#yt-gal',m);
+    el.innerHTML = `<div class="gallery">${d.imageIds.map((id,ix)=>`<div class="gimg"><img data-img="${thumb(id)}" data-full="${id}" alt=""><div class="gact"><a href="#" data-dl="${id}">⬇︎</a><button data-rmimg="${ix}">✕</button></div></div>`).join('')}
+      <label class="gimg upload-btn" style="display:grid;place-items:center;cursor:pointer;color:var(--ink3);font-size:12px;text-align:center">＋ Add images<input type="file" accept="image/*" multiple></label></div>`;
+    hydrate(el);
+    $$('img[data-full]',el).forEach(im=>im.onclick=()=>lightbox(im.dataset.full));
+    $$('[data-dl]',el).forEach(a=>a.onclick=async e=>{ e.preventDefault(); const src = await getImg(a.dataset.dl); if (src) download(`${(d.title||'youtube').replace(/[^\w-]+/g,'_')}_${a.dataset.dl.slice(-4)}.jpg`, src); });
+    $$('[data-rmimg]',el).forEach(b=>b.onclick=async()=>{ const id = d.imageIds[+b.dataset.rmimg]; d.imageIds.splice(+b.dataset.rmimg,1); if (fresh.has(id)) { await deleteImage(id); fresh.delete(id);} else toDelete.add(id); gal(); });
+    $('input[type=file]',el).onchange = async e => { const files = [...e.target.files]; if (!files.length) return; toast(`Uploading ${files.length} image${files.length>1?'s':''}…`);
+      for (const f of files) { try { const id = await uploadImage(f); fresh.add(id); d.imageIds.push(id); } catch(err){ toast(err.message,'err'); } } gal(); };
+  };
+  gal();
+  $('#yt-save',m).onclick = async () => {
+    const v = id => $(id,m).value.trim();
+    Object.assign(d, {title:v('#yt-title'), angle:v('#yt-angle'), stage:$('#yt-stage',m).value, format:$('#yt-format',m).value, length:v('#yt-length'), audience:v('#yt-aud'),
+      titleOptions:v('#yt-titles'), outline:v('#yt-outline'), research:v('#yt-research'), shorts:v('#yt-shorts'), publishDate:$('#yt-date',m).value, link:v('#yt-link')});
+    if (d.link && !/^https?:\/\//i.test(d.link)) d.link = 'https://' + d.link;
+    if (!d.title) { $('#yt-err',m).textContent = 'Add a working title.'; return; }
+    const {id, ...data} = d;
+    if (isNew) { data.createdAt = Date.now(); data.createdBy = S.me.name; await store.add('youtube', data); }
+    else { data.updatedAt = Date.now(); await store.set('youtube', id, data); }
+    for (const did of toDelete) await deleteImage(did); fresh.clear(); closeModal(true); toast(isNew?'Idea added':'Saved');
+  };
+  const del = $('#yt-del',m); if (del) del.onclick = async () => { if (!await askConfirm(`Delete "${d.title}"?`)) return;
+    await store.remove('youtube', d.id); for (const id of [...d.imageIds, ...toDelete]) await deleteImage(id);
+    for (const c of S.comments.filter(c=>c.parentId===d.id)) await store.remove('comments', c.id); closeModal(true); toast('Deleted'); };
+  setTimeout(()=>{ if (isNew) $('#yt-title',m).focus(); }, 30);
+}
+
+// =====================================================================
 // LIBRARY (old content)
 // =====================================================================
 function lastDate(p){ const t = todayISO(); const ds = [p.lastPosted, p.date, ...repostsOf(p.id).filter(isPosted).map(x=>x.date)].filter(d => d && d <= t).sort(); return ds.pop() || p.date || ''; }
@@ -1567,7 +1751,7 @@ function viewSettings(){
   </div>`;
 }
 
-const VIEWS = { calendar:viewCalendar, ideas:viewIdeas, library:viewLibrary, stats:viewReview, weekly:viewWeekly, plan:viewPlan, reflections:viewReflections, settings:viewSettings };
+const VIEWS = { calendar:viewCalendar, ideas:viewIdeas, youtube:viewYouTube, word:viewWord, library:viewLibrary, stats:viewReview, weekly:viewWeekly, plan:viewPlan, reflections:viewReflections, settings:viewSettings };
 
 // ---------- settings helpers ----------
 async function saveSettings(mut){ const s = clean(S.settings); mut(s); S.settings = s; requestRender(); try { await store.setSettings(s); } catch(e){ toast('Could not save settings: '+e.message,'err'); } }
@@ -1666,6 +1850,14 @@ document.addEventListener('click', async e => {
     case 'openPost': { e.stopPropagation(); const p = S.posts.find(x=>x.id===id); if (p) openPostEditor(p); break; }
     case 'newOld': openPostEditor({source:'manual', status:'Posted', platforms:['ig']}); break;
     // ideas
+    case 'wwNew': openWordEditor(); break;
+    case 'wwEdit': openWordEditor(S.weeklyword.find(x=>x.id===id)); break;
+    case 'wwFilter': S.wwf = t.dataset.f; renderView(); break;
+    case 'wwCopy': { const w = S.weeklyword.find(x=>x.id===id); if (w) copyText(w.text, 'Weekly Word copied'); break; }
+    case 'wwClaude': { const w = S.weeklyword.find(x=>x.id===id); if (w) copyText(wwPrompt(w), 'Copied with carousel instructions: paste it into Claude'); break; }
+    case 'ytNew': e.stopPropagation(); openYTEditor({}); break;
+    case 'ytOpen': { const y = S.youtube.find(x=>x.id===id); if (y) openYTEditor(y); break; }
+    case 'ytStarters': { const now = Date.now(); for (const [i,[title,format,angle]] of YT_STARTERS.entries()) await store.add('youtube', {title, format, angle, stage:'idea', imageIds:[], createdBy:'Starter idea', createdAt: now - i}); toast('Added 6 starter ideas'); break; }
     case 'newIdea': openIdeaEditor({funnelId: t.dataset.f || S.settings.funnels[0]?.id}); break;
     case 'openIdea': { const i = S.ideas.find(x=>x.id===id); if (i) openIdeaEditor(i); break; }
     // review
@@ -1802,6 +1994,7 @@ document.addEventListener('change', async e => {
     case 'tName': { const v = t.value.trim(); if (!v) { renderView(); return; } await saveSettings(s => s.funnels.find(f=>f.id===fid).types.find(x=>x.id===tid).name = v); break; }
     case 'mName': await saveSettings(s => s.members[+t.dataset.ix].name = t.value.trim()); if (store.mode==='firebase') resolveMe(); break;
     case 'mEmail': await saveSettings(s => s.members[+t.dataset.ix].email = t.value.trim().toLowerCase()); if (store.mode==='firebase') resolveMe(); break;
+    case 'wwStatus': await store.update('weeklyword', t.dataset.id, {status: t.value}); toast(wwLabel(t.value)); break;
     case 'followAcct': await saveSettings(st => { st.followerAccounts = {...FOLLOW_DEFAULTS, ...(st.followerAccounts||{}), [t.dataset.k]: t.value.trim() || FOLLOW_DEFAULTS[t.dataset.k]}; }); break;
     case 'repostWeeks': await saveSettings(s => s.repostWeeks = Math.max(1, +t.value || 12)); break;
     case 'importVideos': { const f = t.files[0]; t.value = ''; if (f) importVideos(f); break; }
@@ -1813,6 +2006,7 @@ document.addEventListener('input', e => {
   const t = e.target, k = t.dataset.inp; if (!k) return;
   clearTimeout(inpTimer);
   inpTimer = setTimeout(() => {
+    if (k==='wwQ') S.wwq = t.value; if (k==='ytQ') S.ytq = t.value;
     if (k==='idfQ') S.idf.q = t.value; if (k==='lfQ') S.lf.q = t.value; if (k==='rfQ') S.rf.q = t.value;
     const pos = t.selectionStart; renderView(); const n = $(`[data-inp="${k}"]`); if (n) { n.focus(); try { n.setSelectionRange(pos,pos); } catch {} }
   }, 220);
