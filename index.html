@@ -420,6 +420,13 @@ details.wwcard>summary h3{flex:1 1 220px}
 .ww-badge.created{color:var(--warn);border-color:rgba(240,184,90,.45);background:rgba(240,184,90,.08)}
 .ww-badge.used{color:var(--mint);border-color:rgba(95,209,167,.45);background:var(--mintSoft)}
 details.wwcard.ww-not{box-shadow:inset 3px 0 0 var(--line2)} details.wwcard.ww-created{box-shadow:inset 3px 0 0 var(--warn)} details.wwcard.ww-used{box-shadow:inset 3px 0 0 var(--mint)}
+.car-box{margin:14px 0 4px;padding:12px 14px;border:1px solid var(--line);border-radius:12px}
+.car-row{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin-top:8px;border:1px solid var(--line);border-radius:10px;flex-wrap:wrap}
+.car-main{flex:1 1 260px;min-width:0}.car-t{font-weight:800;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.car-hook{margin-top:4px;font-style:italic;line-height:1.4}.car-angle{margin-top:4px;line-height:1.4}
+.car-act{display:flex;gap:4px;align-items:center;flex-wrap:wrap}.car-act .qrev{margin-left:0}
+.car-src{margin:14px 0 -2px}.ww-cn{margin-left:auto;white-space:nowrap}
+.ww-mode button{font-size:14px;font-weight:800}
 .ww-text{white-space:pre-wrap;word-break:break-word;line-height:1.6;max-width:72ch;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:14px 16px;max-height:420px;overflow:auto}
 .ww-st{width:auto;min-height:32px;padding:4px 10px;font-size:12.5px}
 /* ---------- youtube ---------- */
@@ -428,6 +435,27 @@ details.wwcard.ww-not{box-shadow:inset 3px 0 0 var(--line2)} details.wwcard.ww-c
 .ytgrid .icard{margin:0}
 .ytcard img{width:96px}
 .yt-step{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:11.5px;font-weight:800;background:var(--mintSoft);color:var(--mint);border:1px solid rgba(95,209,167,.35)}
+/* ---------- review ---------- */
+.rv-tabs button.rv-approved.on{color:var(--mint)} .rv-tabs button.rv-refine.on{color:var(--warn);border-color:rgba(240,184,90,.5);background:rgba(240,184,90,.08)} .rv-tabs button.rv-denied.on{color:var(--danger);border-color:rgba(255,122,107,.5);background:rgba(255,122,107,.08)}
+.rvb{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;border:1px solid var(--line2)}
+.rvb.approved{color:var(--mint);border-color:rgba(95,209,167,.45);background:var(--mintSoft)}
+.rvb.refine{color:var(--warn);border-color:rgba(240,184,90,.45);background:rgba(240,184,90,.08)}
+.rvb.denied{color:var(--danger);border-color:rgba(255,122,107,.45);background:rgba(255,122,107,.08)}
+.icard.rvc-approved{box-shadow:inset 3px 0 0 var(--mint)} .icard.rvc-refine{box-shadow:inset 3px 0 0 var(--warn)} .icard.rvc-denied{opacity:.55;box-shadow:inset 3px 0 0 var(--danger)}
+.rnote{font-size:12px;color:var(--warn);margin-top:5px;line-height:1.35}
+.qrev{display:inline-flex;gap:3px;margin-left:auto}
+.qr{width:26px;height:26px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--ink3);cursor:pointer;font-weight:800;font-size:12px;display:grid;place-items:center;padding:0}
+.qr:hover{color:var(--ink);border-color:var(--ink3)}
+.qr.approved.on{background:var(--mintSoft);color:var(--mint);border-color:rgba(95,209,167,.5)}
+.qr.refine.on{background:rgba(240,184,90,.12);color:var(--warn);border-color:rgba(240,184,90,.5)}
+.qr.denied.on{background:rgba(255,122,107,.12);color:var(--danger);border-color:rgba(255,122,107,.5)}
+.rv-pick label.rv-approved.on{background:var(--mintSoft);color:var(--mint);border-color:rgba(95,209,167,.55)}
+.rv-pick label.rv-refine.on{background:rgba(240,184,90,.1);color:var(--warn);border-color:rgba(240,184,90,.55)}
+.rv-pick label.rv-denied.on{background:rgba(255,122,107,.1);color:var(--danger);border-color:rgba(255,122,107,.55)}
+.rv-pick label.rv-unfiltered.on{background:var(--panel2);color:var(--ink);border-color:var(--ink3)}
+details.nf{border:1px solid var(--line2);border-radius:14px;padding:4px 14px;margin-bottom:14px;background:var(--field)}
+details.nf>summary{cursor:pointer;font-weight:700;padding:10px 0;color:var(--mint);font-size:13px}
+details.nf[open]>summary{margin-bottom:6px}
 /* ---------- login ---------- */
 .login{max-width:400px;margin:12vh auto;padding:30px}
 .login h1{font-size:30px;letter-spacing:.16em;font-weight:800}
@@ -666,7 +694,7 @@ const S = {
   settings:null, followers:[], weeklyword:[], youtube:[], wwf:'all', wwq:'', ytq:'', posts:[], ideas:[], plans:[], reflections:[], comments:[], weekly:[],
   me:null, view: (h => ({review:'stats'})[h] || (h && h in {calendar:1,ideas:1,youtube:1,word:1,stats:1,library:1,weekly:1,plan:1,reflections:1,settings:1} ? h : 'calendar'))(location.hash.slice(1)), loaded:new Set(),
   cal:{ month: new Date(new Date().getFullYear(), new Date().getMonth(), 1), sel: todayISO() },
-  idf:{ q:'', series:'', showScheduled:false },
+  idf:{ q:'', series:'', showScheduled:false, review:'all' },
   lf:{ funnel:'all', recycle:'all', ready:false, sort:'new', q:'' },
   rv:{ platform:'all', funnel:'all', type:'all', from:'', to:'', sort:'views', dir:-1, best:'views' },
   wk: iso(mondayOf(new Date())),
@@ -1010,6 +1038,38 @@ function openPostEditor(post={}, opts={}){
 // =====================================================================
 // IDEAS
 // =====================================================================
+const REVIEW = [['unfiltered','Unfiltered'],['approved','Approved'],['refine','Needs refinement'],['denied','Denied']];
+const revOf = x => x.review || 'unfiltered';
+const revLabel = k => (REVIEW.find(r=>r[0]===k)||REVIEW[0])[1];
+const REV_ICON = {unfiltered:'•', approved:'✓', refine:'✎', denied:'✕'};
+function reviewTabs(items, cur, act){
+  const c = k => items.filter(x=>revOf(x)===k).length;
+  return `<div class="ww-filters rv-tabs" role="tablist"><button class="${cur==='all'?'on':''}" data-act="${act}" data-f="all">All <span>${items.length}</span></button>${REVIEW.map(([k,l])=>`<button class="${cur===k?'on':''} rv-${k}" data-act="${act}" data-f="${k}">${REV_ICON[k]} ${l} <span>${c(k)}</span></button>`).join('')}</div>`;
+}
+const reviewBadge = x => { const k = revOf(x); return k==='unfiltered' ? '' : `<span class="rvb ${k}">${REV_ICON[k]} ${revLabel(k)}</span>`; };
+const quickReview = (x, coll) => `<span class="qrev">${REVIEW.filter(([k])=>k!=='unfiltered').map(([k,l])=>`<button type="button" class="qr ${k} ${revOf(x)===k?'on':''}" data-act="quickReview" data-coll="${coll}" data-id="${x.id}" data-r="${k}" title="${l}" aria-label="${l}">${REV_ICON[k]}</button>`).join('')}</span>`;
+function reviewPicker(cur, note){
+  return `<div class="field"><label class="f">Review</label><div class="pill-sel rv-pick" id="rv-pick">${REVIEW.map(([k,l])=>`<label class="rv-${k} ${cur===k?'on':''}"><input type="radio" name="rv" value="${k}" ${cur===k?'checked':''}>${REV_ICON[k]} ${l}</label>`).join('')}</div>
+    <div id="rv-note-wrap" ${cur==='refine'?'':'hidden'} style="margin-top:8px"><label class="f" for="rv-note">What needs refining?</label><textarea id="rv-note" rows="2" placeholder="e.g. Hook isn't strong enough, needs a location, check the numbers…">${esc(note||'')}</textarea></div></div>`;
+}
+function bindReviewPicker(m){
+  const el = $('#rv-pick', m); if (!el) return;
+  el.onchange = e => { $$('label', el).forEach(l => l.classList.toggle('on', l.querySelector('input').checked)); $('#rv-note-wrap', m).hidden = e.target.value !== 'refine'; };
+}
+const readReview = m => $('#rv-pick input:checked', m)?.value || 'unfiltered';
+function notesFields(d, p){
+  return `<details class="nf" ${[d.hook,d.locations,d.people,d.facts,d.notes].some(Boolean)?'open':''}><summary>Notes, locations, facts & numbers</summary>
+    <div class="field"><label class="f" for="${p}-hook">Hook / opening line</label><input id="${p}-hook" value="${esc(d.hook||'')}" placeholder="The first thing said or shown on screen"></div>
+    <div class="grid2">
+      <div class="field"><label class="f" for="${p}-loc">Locations</label><textarea id="${p}-loc" rows="2" placeholder="e.g. Tesco Liffey Valley, Daniel's kitchen, club pitch">${esc(d.locations||'')}</textarea></div>
+      <div class="field"><label class="f" for="${p}-people">People, props & kit</label><textarea id="${p}-people" rows="2" placeholder="e.g. a county player, 5 cereal boxes, cue cards">${esc(d.people||'')}</textarea></div>
+    </div>
+    <div class="field"><label class="f" for="${p}-facts">Facts & numbers</label><textarea id="${p}-facts" rows="3" placeholder="Stats, prices, grams, study findings to quote (with sources)">${esc(d.facts||'')}</textarea></div>
+    <div class="field"><label class="f" for="${p}-notes">Notes</label><textarea id="${p}-notes" rows="4" placeholder="Anything else: shot list, script thoughts, caption ideas…">${esc(d.notes||'')}</textarea></div>
+  </details>`;
+}
+const readNotes = (m, p) => ({hook:$(`#${p}-hook`,m).value.trim(), locations:$(`#${p}-loc`,m).value.trim(), people:$(`#${p}-people`,m).value.trim(), facts:$(`#${p}-facts`,m).value.trim(), notes:$(`#${p}-notes`,m).value.trim()});
+const hasNotes = x => [x.hook,x.locations,x.people,x.facts,x.notes].some(Boolean);
 function allSeries(){ return [...new Set(S.ideas.map(i=>i.series).filter(Boolean))].sort(); }
 const HOOKS = [
  ['Instant hooks', [
@@ -1076,9 +1136,10 @@ function hookBank(){
 }
 
 function viewIdeas(){
-  const {q, series, showScheduled} = S.idf; const ql = q.toLowerCase();
-  const list = S.ideas.filter(i => (showScheduled || i.status!=='scheduled') && (!series || i.series===series) &&
-    (!ql || [i.title,i.description,i.series,i.research].join(' ').toLowerCase().includes(ql)));
+  const {q, series, showScheduled} = S.idf; const ql = q.toLowerCase(); const rv = S.idf.review || 'all';
+  const base = S.ideas.filter(i => (showScheduled || i.status!=='scheduled') && (!series || i.series===series) &&
+    (!ql || [i.title,i.description,i.series,i.research,i.notes,i.facts,i.locations,i.hook].join(' ').toLowerCase().includes(ql)));
+  const list = base.filter(i => rv==='all' || revOf(i)===rv);
   const funnels = [...S.settings.funnels];
   const orphan = list.filter(i=>!S.settings.funnels.some(f=>f.id===i.funnelId));
   if (orphan.length) funnels.push({id:'__none', name:'Unassigned', color:'#7d8a87', types:[]});
@@ -1092,8 +1153,9 @@ function viewIdeas(){
     return sec(`ideas-${f.id}`, head, body, {cls:'fcol', style:`--fc:${esc(f.color)}`});
   }).join('');
   return `
-  <div class="vhead"><h2>Ideas</h2>${allToggle()}<button class="btn primary" data-act="newIdea">+ New idea</button></div>
+  <div class="vhead"><h2>Ideas</h2>${allToggle()}<span class="btn sm upload-btn">Import ideas<input type="file" data-chg="importVideos"></span><button class="btn primary" data-act="newIdea">+ New idea</button></div>
   ${hookBank()}
+  ${reviewTabs(base, rv, 'idfReview')}
   <div class="filters">
     <input type="text" id="idf-q" placeholder="Search ideas…" value="${esc(q)}" data-inp="idfQ">
     <select id="idf-series" data-chg="idfSeries"><option value="">All series</option>${allSeries().map(s=>`<option ${s===series?'selected':''}>${esc(s)}</option>`).join('')}</select>
@@ -1103,22 +1165,24 @@ function viewIdeas(){
 }
 function ideaCard(i){
   const img = i.imageIds?.[0];
-  return `<div class="icard ${i.status==='scheduled'?'done':''}" data-act="openIdea" data-id="${i.id}">
+  return `<div class="icard rvc-${revOf(i)} ${i.status==='scheduled'?'done':''}" data-act="openIdea" data-id="${i.id}">
     <div class="ib"><div class="it">${esc(i.title)}</div>${i.description?`<div class="id">${esc(i.description)}</div>`:''}
-    <div class="im">${i.series?`<span class="chip">📺 ${esc(i.series)}</span>`:''}${i.status==='scheduled'?`<span class="chip">📅 Scheduled</span>`:''}${(S.comments.filter(c=>c.parentId===i.id).length)?`<span class="chip">💬 ${S.comments.filter(c=>c.parentId===i.id).length}</span>`:''}<span class="tiny">${esc(i.createdBy||'')}</span></div></div>
+    ${revOf(i)==='refine'&&i.refineNote?`<div class="rnote">✎ ${esc(i.refineNote)}</div>`:''}
+    <div class="im">${reviewBadge(i)}${hasNotes(i)?`<span class="chip">📝 Notes</span>`:''}${i.series?`<span class="chip">📺 ${esc(i.series)}</span>`:''}${i.status==='scheduled'?`<span class="chip">📅 Scheduled</span>`:''}${(S.comments.filter(c=>c.parentId===i.id).length)?`<span class="chip">💬 ${S.comments.filter(c=>c.parentId===i.id).length}</span>`:''}<span class="tiny">${esc(i.createdBy||'')}</span>${quickReview(i,'ideas')}</div></div>
     ${img?`<img data-img="${thumb(img)}" alt="">`:''}
   </div>`;
 }
 function openIdeaEditor(idea={}){
   const isNew = !idea.id;
-  const d = clean({title:'',description:'',funnelId:S.settings.funnels[0]?.id||'',typeId:'',series:'',research:'',imageIds:[],status:'open',...idea});
+  const d = clean({title:'',description:'',funnelId:S.settings.funnels[0]?.id||'',typeId:'',series:'',research:'',imageIds:[],status:'open',review:'unfiltered',refineNote:'',hook:'',locations:'',people:'',facts:'',notes:'',...idea});
   const fresh = new Set(), toDelete = new Set();
   const linked = d.postId ? S.posts.find(p=>p.id===d.postId) : null;
   const html = `
   <div class="mh"><h3>${isNew?'New idea':'Idea'}</h3><button class="icon-btn" data-close>✕</button></div>
   <div class="mb">
     ${linked?`<div class="card pad" style="margin-bottom:12px;background:var(--panel2)">📅 Scheduled as <b>${esc(linked.title)}</b> on ${linked.date?fmtDay(linked.date):'—'} · <a href="#" data-openpost="${linked.id}">Open post</a></div>`:''}
-    <div class="field"><label class="f">Rough title</label><input id="ie-title" value="${esc(d.title)}"></div>
+    <div class="field"><label class="f" for="ie-title">Rough title</label><input id="ie-title" value="${esc(d.title)}"></div>
+    ${reviewPicker(revOf(d), d.refineNote)}
     <div class="field"><label class="f">Description</label><textarea id="ie-desc" rows="3">${esc(d.description)}</textarea></div>
     <div class="grid2">
       <div class="field"><label class="f">Funnel</label><select id="ie-funnel">${funnelOptions(d.funnelId)}</select></div>
@@ -1126,6 +1190,7 @@ function openIdeaEditor(idea={}){
     </div>
     <div class="field"><label class="f">Possible series</label><input id="ie-series" list="ie-series-list" value="${esc(d.series)}" placeholder="e.g. Elite Habits"><datalist id="ie-series-list">${allSeries().map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
     <div class="field"><label class="f">Research / sources / references</label><textarea id="ie-research" rows="3" placeholder="Studies, links, reference videos, notes…">${esc(d.research)}</textarea></div>
+    ${notesFields(d,'ie')}
     <div class="field"><label class="f">Photos (context, references, thumbnail ideas)</label><div id="ie-gal"></div></div>
     <div id="ie-err" class="err-msg"></div>
     ${isNew ? `<div class="thread tiny">Save first to start a discussion on this idea.</div>` : threadHTML(d.id,'idea')}
@@ -1153,10 +1218,11 @@ function openIdeaEditor(idea={}){
       gal();
     };
   };
-  gal();
+  gal(); bindReviewPicker(m);
   $('#ie-funnel',m).onchange = e => { $('#ie-type',m).innerHTML = typeOptions(e.target.value,''); };
   const op = $('[data-openpost]',m); if (op) op.onclick = e => { e.preventDefault(); closeModal(true); openPostEditor(linked); };
-  const collect = () => { d.title=$('#ie-title',m).value.trim(); d.description=$('#ie-desc',m).value.trim(); d.funnelId=$('#ie-funnel',m).value; d.typeId=$('#ie-type',m).value; d.series=$('#ie-series',m).value.trim(); d.research=$('#ie-research',m).value.trim(); };
+  const collect = () => { d.title=$('#ie-title',m).value.trim(); d.description=$('#ie-desc',m).value.trim(); d.funnelId=$('#ie-funnel',m).value; d.typeId=$('#ie-type',m).value; d.series=$('#ie-series',m).value.trim(); d.research=$('#ie-research',m).value.trim();
+    d.review = readReview(m); d.refineNote = d.review==='refine' ? $('#rv-note',m).value.trim() : (d.refineNote||''); Object.assign(d, readNotes(m,'ie')); };
   const save = async () => {
     collect(); if (!d.title) { $('#ie-err',m).textContent = 'Add a rough title.'; return false; }
     const {id, ...data} = d;
@@ -1200,15 +1266,34 @@ async function copyText(txt, label){
     const ta = $('#cp-txt', m); ta.value = txt; ta.focus(); ta.select();
   }
 }
+const wwCars = w => Array.isArray(w.carousels) ? w.carousels : [];
+const carPrompt = (w, c) => wwPrompt(w).replace('Turn it into an Instagram carousel for VERUS:', `Turn it into an Instagram carousel for VERUS using this angle:\nCarousel title: ${c.title}\nHook: ${c.hook||''}\nAngle: ${c.angle||''}${c.refineNote?`\nNotes to refine: ${c.refineNote}`:''}\n`);
+function carRow(w, c){ const k = revOf(c);
+  return `<div class="car-row icard rvc-${k}">
+    <div class="car-main"><div class="car-t">${esc(c.title||'Untitled idea')} ${reviewBadge(c)}</div>
+      ${c.hook?`<div class="car-hook">“${esc(c.hook)}”</div>`:''}${c.angle?`<div class="tiny car-angle">${esc(c.angle)}</div>`:''}
+      ${k==='refine'&&c.refineNote?`<div class="rnote">✎ ${esc(c.refineNote)}</div>`:''}</div>
+    <div class="car-act"><span class="qrev">${REVIEW.filter(([r])=>r!=='unfiltered').map(([r,l])=>`<button type="button" class="qr ${r} ${k===r?'on':''}" data-act="carRev" data-id="${w.id}" data-cid="${c.id}" data-r="${r}" title="${l}" aria-label="${l}">${REV_ICON[r]}</button>`).join('')}</span>
+      <button class="btn sm ghost" data-act="carClaude" data-id="${w.id}" data-cid="${c.id}" title="Copy this idea + the Weekly Word for Claude">Copy for Claude</button>
+      <button class="btn sm ghost" data-act="carEdit" data-id="${w.id}" data-cid="${c.id}">Edit</button></div>
+  </div>`; }
+function viewCarIdeas(all){
+  const f = S.carf || 'all'; const ql = (S.wwq||'').toLowerCase();
+  const items = all.flatMap(w => wwCars(w).map(c => ({...c, _w:w})));
+  const list = items.filter(c => (f==='all' || revOf(c)===f) && (!ql || [c.title,c.hook,c.angle,c._w.title].join(' ').toLowerCase().includes(ql)));
+  return `${reviewTabs(items, f, 'carFilter')}
+  <div class="filters"><input type="text" id="ww-q" placeholder="Search the carousel ideas…" value="${esc(S.wwq||'')}" data-inp="wwQ"></div>
+  ${list.length ? `<div class="car-list">${list.map(c => `<div class="car-src tiny">From <b>${esc(c._w.title||'Weekly Word')}</b> · ${c._w.date?fmtDate(c._w.date):''}</div>${carRow(c._w, c)}`).join('')}</div>` : `<div class="card empty">${items.length ? 'No carousel ideas in this section.' : 'No carousel ideas yet. Open a Weekly Word and press “+ Carousel idea”.'}</div>`}`;
+}
 function viewWord(){
-  const f = S.wwf || 'all'; const ql = (S.wwq||'').toLowerCase();
+  const f = S.wwf || 'all'; const ql = (S.wwq||'').toLowerCase(); const mode = S.wwm || 'words';
   const all = [...S.weeklyword].sort((a,b)=>(b.date||'').localeCompare(a.date||'') || (b.createdAt||0)-(a.createdAt||0));
   const counts = Object.fromEntries(WW_STATUS.map(([k])=>[k, all.filter(w=>(w.status||'not')===k).length]));
   const list = all.filter(w => (f==='all' || (w.status||'not')===f) && (!ql || [w.title,w.text].join(' ').toLowerCase().includes(ql)));
-  const card = w => { const st = w.status||'not';
+  const card = w => { const st = w.status||'not'; const cs = wwCars(w); const ap = cs.filter(c=>revOf(c)==='approved').length;
     return `<details class="wwcard sec card ${'ww-'+st}" data-sec="ww-${w.id}" ${isOpen('ww-'+w.id, false)?'open':''}>
       <summary class="sec-h"><span class="ww-date">${w.date?fmtDate(w.date):'No date'}</span><h3>${esc(w.title || (w.text||'').split('\n')[0].slice(0,70) || 'Weekly Word')}</h3>
-        <span class="ww-badge ${st}">${esc(wwLabel(st))}</span><span class="chev" aria-hidden="true"></span></summary>
+        ${cs.length?`<span class="tiny ww-cn">${cs.length} ideas${ap?` · ${ap} ✓`:''}</span>`:''}<span class="ww-badge ${st}">${esc(wwLabel(st))}</span><span class="chev" aria-hidden="true"></span></summary>
       <div class="sec-b">
         <div class="ww-text">${esc(w.text||'')}</div>
         <div class="tiny" style="margin:10px 0">${esc(w.createdBy||'')}${w.createdAt?` · added ${fmtDateTime(w.createdAt)}`:''}${w.updatedAt?` · edited`:''}${(w.text||'').trim()?` · ${(w.text||'').trim().split(/\s+/).length} words`:''}</div>
@@ -1218,10 +1303,14 @@ function viewWord(){
           <select class="ww-st" data-chg="wwStatus" data-id="${w.id}" aria-label="Carousel status">${WW_STATUS.map(([k,l])=>`<option value="${k}" ${k===st?'selected':''}>${l}</option>`).join('')}</select>
           <button class="btn sm ghost" data-act="wwEdit" data-id="${w.id}">Edit</button>
         </div>
+        <div class="car-box"><div class="row" style="align-items:center"><h4 style="margin:0">Carousel ideas</h4><div class="sp"></div><button class="btn sm" data-act="carNew" data-id="${w.id}">+ Carousel idea</button></div>
+          ${cs.length ? cs.map(c=>carRow(w,c)).join('') : '<div class="tiny" style="margin-top:6px">No carousel ideas yet.</div>'}</div>
         ${threadHTML(w.id,'word')}
       </div></details>`; };
-  return `
-  <div class="vhead"><h2>Weekly Word</h2>${allToggle()}<button class="btn primary" data-act="wwNew">+ Add Weekly Word</button></div>
+  const head = `<div class="vhead"><h2>Weekly Word</h2>${mode==='words'?allToggle():''}<button class="btn primary" data-act="wwNew">+ Add Weekly Word</button><label class="btn ghost" style="cursor:pointer">Import<input type="file" accept=".json,application/json" data-chg="importVideos" hidden></label></div>
+  <div class="ww-filters ww-mode"><button class="${mode==='words'?'on':''}" data-act="wwMode" data-m="words">Weekly Words <span>${all.length}</span></button><button class="${mode==='cars'?'on':''}" data-act="wwMode" data-m="cars">Carousel ideas <span>${all.reduce((n,w)=>n+wwCars(w).length,0)}</span></button></div>`;
+  if (mode==='cars') return head + viewCarIdeas(all);
+  return head + `
   <div class="ww-filters" role="tablist">
     <button class="${f==='all'?'on':''}" data-act="wwFilter" data-f="all">All <span>${all.length}</span></button>
     ${WW_STATUS.map(([k,l])=>`<button class="${f===k?'on':''} f-${k}" data-act="wwFilter" data-f="${k}">${l} <span>${counts[k]}</span></button>`).join('')}
@@ -1254,11 +1343,33 @@ function openWordEditor(w){
   setTimeout(()=>$(isNew?'#ww-text':'#ww-title',m)?.focus(), 30);
 }
 
+function openCarEditor(w, c){
+  const isNew = !c; const d = c ? {...c} : {id: uid(), title:'', hook:'', angle:'', review:'unfiltered', refineNote:''};
+  const m = openModal(`<div class="mh"><h3>${isNew?'New carousel idea':'Edit carousel idea'}</h3><button class="icon-btn" data-close>✕</button></div>
+    <div class="mb"><p class="tiny" style="margin:0 0 10px">From: <b>${esc(w.title||'Weekly Word')}</b>${w.date?` · ${fmtDate(w.date)}`:''}</p>
+      <div class="field"><label class="f" for="car-title">Carousel title</label><input id="car-title" value="${esc(d.title||'')}"></div>
+      <div class="field"><label class="f" for="car-hook">Hook (slide 1)</label><input id="car-hook" value="${esc(d.hook||'')}"></div>
+      <div class="field"><label class="f" for="car-angle">Angle / what the slides cover</label><textarea id="car-angle" rows="4">${esc(d.angle||'')}</textarea></div>
+      ${reviewPicker(revOf(d), d.refineNote)}<div id="car-err" class="err-msg"></div></div>
+    <div class="mf">${isNew?'':`<button class="btn danger" id="car-del">Delete</button>`}<div class="sp"></div><button class="btn" data-close>Cancel</button><button class="btn primary" id="car-save">Save</button></div>`);
+  bindReviewPicker(m);
+  const cur = () => wwCars(S.weeklyword.find(x=>x.id===w.id) || w);
+  $('#car-save',m).onclick = async () => {
+    const r = readReview(m);
+    const v = {...d, title: $('#car-title',m).value.trim(), hook: $('#car-hook',m).value.trim(), angle: $('#car-angle',m).value.trim(), review: r, refineNote: r==='refine' ? ($('#rv-note',m)?.value.trim()||'') : (d.refineNote||'')};
+    if (!v.title) { $('#car-err',m).textContent = 'Give the idea a title.'; return; }
+    const arr = cur(); const next = isNew ? [...arr, v] : arr.map(x => x.id===d.id ? v : x);
+    await store.update('weeklyword', w.id, {carousels: next}); closeModal(true); toast('Saved');
+  };
+  const del = $('#car-del',m); if (del) del.onclick = async () => { if (!await askConfirm('Delete this carousel idea?')) return; await store.update('weeklyword', w.id, {carousels: cur().filter(x=>x.id!==d.id)}); closeModal(true); toast('Deleted'); };
+  setTimeout(()=>$('#car-title',m)?.focus(), 30);
+}
+
 // =====================================================================
 // YOUTUBE (long-form ideas)
 // =====================================================================
 const YT_STAGES = [['idea','Ideas'],['research','Researching'],['scripted','Scripted'],['filmed','Filmed'],['edited','Edited'],['published','Published']];
-const YT_FORMATS = ['Deep dive / explainer','Full day of eating','Nutritionist reacts','Q&A','Interview / guest','Client case study','Behind the scenes / vlog','Cook-along','Podcast episode','Other'];
+const YT_FORMATS = ['Series episode','Video essay','Deep dive / explainer','Full day of eating','Nutritionist reacts','Q&A','Interview / guest','Client case study','Behind the scenes / vlog','Cook-along','Podcast episode','Other'];
 const YT_STARTERS = [
   ['Full day of eating: county footballer','Full day of eating','Follow a county player from breakfast to bed on a training day, with Daniel explaining every choice. Cut 5–8 Shorts from it.'],
   ['The 24-hour post-match recovery protocol','Deep dive / explainer','Exactly what to eat, drink and do in the 24 hours after a game: the first hour, the evening meal, sleep, and the next day.'],
@@ -1268,28 +1379,32 @@ const YT_STARTERS = [
   ['Building an athlete: 90 days with VERUS','Client case study','Follow one athlete through the 90-Day Programme: intake, plan, check-ins, results. Needs written permission (parental consent if under 18).'],
 ];
 function viewYouTube(){
-  const ql = (S.ytq||'').toLowerCase();
-  const all = S.youtube.filter(y => !ql || [y.title,y.angle,y.outline,y.format].join(' ').toLowerCase().includes(ql));
+  const ql = (S.ytq||'').toLowerCase(); const rv = S.ytf || 'all';
+  const base = S.youtube.filter(y => !ql || [y.title,y.angle,y.outline,y.format,y.notes,y.facts,y.locations,y.hook].join(' ').toLowerCase().includes(ql));
+  const all = base.filter(y => rv==='all' || revOf(y)===rv);
   const card = y => { const img = y.imageIds?.[0]; const shorts = (y.shorts||'').split('\n').filter(s=>s.trim()).length;
-    return `<div class="icard ytcard" data-act="ytOpen" data-id="${y.id}">
+    return `<div class="icard ytcard rvc-${revOf(y)}" data-act="ytOpen" data-id="${y.id}">
       <div class="ib"><div class="it">${esc(y.title)}</div>${y.angle?`<div class="id">${esc(y.angle)}</div>`:''}
-      <div class="im">${y.format?`<span class="chip">${esc(y.format)}</span>`:''}${y.length?`<span class="chip">⏱ ${esc(y.length)}</span>`:''}${shorts?`<span class="chip">✂️ ${shorts} Shorts</span>`:''}${y.publishDate?`<span class="chip">📅 ${fmtDate(y.publishDate)}</span>`:''}${S.comments.filter(c=>c.parentId===y.id).length?`<span class="chip">💬 ${S.comments.filter(c=>c.parentId===y.id).length}</span>`:''}<span class="tiny">${esc(y.createdBy||'')}</span></div></div>
+      ${revOf(y)==='refine'&&y.refineNote?`<div class="rnote">✎ ${esc(y.refineNote)}</div>`:''}
+      <div class="im">${reviewBadge(y)}${hasNotes(y)?`<span class="chip">📝 Notes</span>`:''}${y.format?`<span class="chip">${esc(y.format)}</span>`:''}${y.length?`<span class="chip">⏱ ${esc(y.length)}</span>`:''}${shorts?`<span class="chip">✂️ ${shorts} Shorts</span>`:''}${y.publishDate?`<span class="chip">📅 ${fmtDate(y.publishDate)}</span>`:''}${S.comments.filter(c=>c.parentId===y.id).length?`<span class="chip">💬 ${S.comments.filter(c=>c.parentId===y.id).length}</span>`:''}<span class="tiny">${esc(y.createdBy||'')}</span>${quickReview(y,'youtube')}</div></div>
       ${img?`<img data-img="${thumb(img)}" alt="">`:''}</div>`; };
   const groups = YT_STAGES.map(([k,l],ix) => { const items = all.filter(y=>(y.stage||'idea')===k).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
     return sec(`yt-${k}`, `<span class="yt-step">${ix+1}</span><h3>${l}</h3><span class="cnt">${items.length}</span>${k==='idea'?`<button class="icon-btn add" data-act="ytNew" title="Add a YouTube idea">＋</button>`:''}`,
       items.length ? `<div class="ytgrid">${items.map(card).join('')}</div>` : `<div class="tiny">Nothing at this stage.</div>`, {def: k!=='published' || items.length>0}); }).join('');
   return `
-  <div class="vhead"><h2>YouTube</h2><span class="muted">Long-form ideas, from first thought to published</span>${allToggle()}<button class="btn primary" data-act="ytNew">+ YouTube idea</button></div>
+  <div class="vhead"><h2>YouTube</h2><span class="muted">Long-form ideas, from first thought to published</span>${allToggle()}<span class="btn sm upload-btn">Import ideas<input type="file" data-chg="importVideos"></span><button class="btn primary" data-act="ytNew">+ YouTube idea</button></div>
+  ${reviewTabs(base, rv, 'ytReview')}
   <div class="filters"><input type="text" id="yt-q" placeholder="Search YouTube ideas…" value="${esc(S.ytq||'')}" data-inp="ytQ"></div>
   ${S.youtube.length ? groups : `<div class="card empty">No long-form ideas yet. Add your own with “+ YouTube idea”, or <button class="btn sm" data-act="ytStarters">add 6 starter ideas</button> to get going.</div>`}`;
 }
 function openYTEditor(y={}){
   const isNew = !y.id;
-  const d = clean({title:'', angle:'', format:'', length:'', stage:'idea', audience:'', titleOptions:'', outline:'', research:'', shorts:'', publishDate:'', link:'', imageIds:[], ...y});
+  const d = clean({title:'', angle:'', format:'', length:'', stage:'idea', audience:'', titleOptions:'', outline:'', research:'', shorts:'', publishDate:'', link:'', imageIds:[], review:'unfiltered', refineNote:'', hook:'', locations:'', people:'', facts:'', notes:'', ...y});
   const fresh = new Set(), toDelete = new Set();
   const m = openModal(`<div class="mh"><h3>${isNew?'New YouTube idea':'YouTube idea'}</h3><button class="icon-btn" data-close>✕</button></div>
   <div class="mb">
     <div class="field"><label class="f" for="yt-title">Working title</label><input id="yt-title" value="${esc(d.title)}" placeholder="e.g. Full day of eating: county footballer"></div>
+    ${reviewPicker(revOf(d), d.refineNote)}
     <div class="field"><label class="f" for="yt-angle">The idea / angle</label><textarea id="yt-angle" rows="3" placeholder="What's the video about and why would someone watch to the end?">${esc(d.angle)}</textarea></div>
     <div class="grid3">
       <div class="field"><label class="f" for="yt-stage">Stage</label><select id="yt-stage">${YT_STAGES.map(([k,l])=>`<option value="${k}" ${k===d.stage?'selected':''}>${l==='Ideas'?'Idea':l}</option>`).join('')}</select></div>
@@ -1305,6 +1420,7 @@ function openYTEditor(y={}){
       <div class="field"><label class="f" for="yt-date">Planned publish date</label><input id="yt-date" type="date" value="${esc(d.publishDate)}"></div>
       <div class="field"><label class="f" for="yt-link">YouTube link (once live)</label><input id="yt-link" type="url" value="${esc(d.link)}" placeholder="https://youtu.be/…"></div>
     </div>
+    ${notesFields(d,'yt')}
     <div class="field"><label class="f">Thumbnail ideas & reference images</label><div id="yt-gal"></div></div>
     <div id="yt-err" class="err-msg"></div>
     ${isNew ? `<div class="thread tiny">Save first to start a discussion on this idea.</div>` : threadHTML(d.id,'youtube')}
@@ -1321,11 +1437,12 @@ function openYTEditor(y={}){
     $('input[type=file]',el).onchange = async e => { const files = [...e.target.files]; if (!files.length) return; toast(`Uploading ${files.length} image${files.length>1?'s':''}…`);
       for (const f of files) { try { const id = await uploadImage(f); fresh.add(id); d.imageIds.push(id); } catch(err){ toast(err.message,'err'); } } gal(); };
   };
-  gal();
+  gal(); bindReviewPicker(m);
   $('#yt-save',m).onclick = async () => {
     const v = id => $(id,m).value.trim();
     Object.assign(d, {title:v('#yt-title'), angle:v('#yt-angle'), stage:$('#yt-stage',m).value, format:$('#yt-format',m).value, length:v('#yt-length'), audience:v('#yt-aud'),
-      titleOptions:v('#yt-titles'), outline:v('#yt-outline'), research:v('#yt-research'), shorts:v('#yt-shorts'), publishDate:$('#yt-date',m).value, link:v('#yt-link')});
+      titleOptions:v('#yt-titles'), outline:v('#yt-outline'), research:v('#yt-research'), shorts:v('#yt-shorts'), publishDate:$('#yt-date',m).value, link:v('#yt-link'), review: readReview(m), ...readNotes(m,'yt')});
+    if (d.review==='refine') d.refineNote = $('#rv-note',m).value.trim();
     if (d.link && !/^https?:\/\//i.test(d.link)) d.link = 'https://' + d.link;
     if (!d.title) { $('#yt-err',m).textContent = 'Add a working title.'; return; }
     const {id, ...data} = d;
@@ -1850,9 +1967,21 @@ document.addEventListener('click', async e => {
     case 'openPost': { e.stopPropagation(); const p = S.posts.find(x=>x.id===id); if (p) openPostEditor(p); break; }
     case 'newOld': openPostEditor({source:'manual', status:'Posted', platforms:['ig']}); break;
     // ideas
+    case 'idfReview': S.idf.review = t.dataset.f; renderView(); break;
+    case 'ytReview': S.ytf = t.dataset.f; renderView(); break;
+    case 'quickReview': { e.stopPropagation(); const coll = t.dataset.coll; const x = S[coll].find(z=>z.id===id); if (!x) break;
+      const r = revOf(x)===t.dataset.r ? 'unfiltered' : t.dataset.r; await store.update(coll, id, {review:r}); toast(r==='unfiltered' ? 'Moved back to Unfiltered' : `Moved to ${revLabel(r)}`); break; }
     case 'wwNew': openWordEditor(); break;
     case 'wwEdit': openWordEditor(S.weeklyword.find(x=>x.id===id)); break;
     case 'wwFilter': S.wwf = t.dataset.f; renderView(); break;
+    case 'wwMode': S.wwm = t.dataset.m; renderView(); break;
+    case 'carFilter': S.carf = t.dataset.f; renderView(); break;
+    case 'carNew': { e.stopPropagation(); const w = S.weeklyword.find(x=>x.id===id); if (w) openCarEditor(w); break; }
+    case 'carEdit': { e.stopPropagation(); const w = S.weeklyword.find(x=>x.id===id); const c = w && wwCars(w).find(x=>x.id===t.dataset.cid); if (c) openCarEditor(w, c); break; }
+    case 'carClaude': { e.stopPropagation(); const w = S.weeklyword.find(x=>x.id===id); const c = w && wwCars(w).find(x=>x.id===t.dataset.cid); if (c) copyText(carPrompt(w,c), 'Copied this idea + the Weekly Word: paste it into Claude'); break; }
+    case 'carRev': { e.stopPropagation(); const w = S.weeklyword.find(x=>x.id===id); if (!w) break; const cid = t.dataset.cid;
+      const c = wwCars(w).find(x=>x.id===cid); if (!c) break; const r = revOf(c)===t.dataset.r ? 'unfiltered' : t.dataset.r;
+      await store.update('weeklyword', id, {carousels: wwCars(w).map(x => x.id===cid ? {...x, review:r} : x)}); toast(r==='unfiltered' ? 'Moved back to Unfiltered' : `Moved to ${revLabel(r)}`); break; }
     case 'wwCopy': { const w = S.weeklyword.find(x=>x.id===id); if (w) copyText(w.text, 'Weekly Word copied'); break; }
     case 'wwClaude': { const w = S.weeklyword.find(x=>x.id===id); if (w) copyText(wwPrompt(w), 'Copied with carousel instructions: paste it into Claude'); break; }
     case 'ytNew': e.stopPropagation(); openYTEditor({}); break;
@@ -1930,7 +2059,49 @@ document.addEventListener('click', async e => {
 function dataURLtoBlob(u){ const [h,b] = u.split(','); const mime = (h.match(/:(.*?);/)||[])[1] || 'image/jpeg'; const bin = atob(b); const arr = new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i); return new Blob([arr], {type:mime}); }
 async function importVideos(file){
   let data; try { data = JSON.parse(await file.text()); } catch { toast("That file isn't a valid import file",'err'); return; }
+  if (data && data.weeklyword) return importWordData(data.weeklyword);
+  if (data && (data.ideas || data.youtube)) return importIdeaData(data);
   return importVideoData(data);
+}
+async function importWordData(arr){
+  const norm = x => String(x||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  const have = new Set(S.weeklyword.map(w => norm(w.title)+'|'+(w.date||'')));
+  const haveText = new Set(S.weeklyword.map(w => norm(w.text).slice(0,200)));
+  let added = 0, skipped = 0; const now = Date.now();
+  for (const [i, w] of arr.entries()) {
+    if (!w || !w.text) continue;
+    const k = norm(w.title)+'|'+(w.date||'');
+    if (have.has(k) || haveText.has(norm(w.text).slice(0,200))) { skipped++; continue; }
+    have.add(k);
+    await store.add('weeklyword', {date: w.date||'', title: w.title||'', text: w.text, status: w.status||'not',
+      carousels: (w.carousels||[]).map(c => ({id: uid(), title: c.title||'', hook: c.hook||'', angle: c.angle||'', review: c.review||'unfiltered', refineNote: c.refineNote||''})),
+      createdBy: S.me.name, createdAt: now - i});
+    added++;
+  }
+  toast(`Imported ${added} Weekly Words${skipped?` (${skipped} already there)`:''}`);
+}
+async function importIdeaData(data){
+  const norm = x => String(x||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  const findF = v => S.settings.funnels.find(f => f.id===v || norm(f.name)===norm(v) || norm(f.name).split(' ')[0]===norm(v)) || S.settings.funnels[0];
+  const ideas = data.ideas || [], yts = data.youtube || [];
+  const missing = [];
+  ideas.forEach(v => { const f = findF(v.funnel); if (v.type && !f.types.some(x => norm(x.name)===norm(v.type)) && !missing.some(m=>m.f===f.id && norm(m.n)===norm(v.type))) missing.push({f:f.id, n:v.type}); });
+  if (missing.length) await saveSettings(st => missing.forEach(m => st.funnels.find(f=>f.id===m.f).types.push({id:'t_'+uid(), name:m.n})));
+  const haveI = new Set(S.ideas.map(i=>norm(i.title))), haveY = new Set(S.youtube.map(y=>norm(y.title)));
+  let ai = 0, ay = 0, skip = 0; const now = Date.now();
+  toast(`Importing ${ideas.length + yts.length} ideas…`);
+  for (const [ix,v] of ideas.entries()) {
+    if (haveI.has(norm(v.title))) { skip++; continue; }
+    const f = findF(v.funnel), ty = S.settings.funnels.find(x=>x.id===f.id).types.find(x => norm(x.name)===norm(v.type));
+    await store.add('ideas', {title:v.title, description:v.description||'', funnelId:f.id, typeId:ty?.id||'', series:v.series||'', research:v.research||'', imageIds:[], status:'open', createdBy:S.me.name, createdAt: now - ix});
+    haveI.add(norm(v.title)); ai++;
+  }
+  for (const [ix,v] of yts.entries()) {
+    if (haveY.has(norm(v.title))) { skip++; continue; }
+    await store.add('youtube', {title:v.title, angle:v.angle||'', format:v.format||'', stage:v.stage||'idea', outline:v.outline||'', shorts:v.shorts||'', imageIds:[], createdBy:S.me.name, createdAt: now - ix});
+    haveY.add(norm(v.title)); ay++;
+  }
+  toast(`Added ${ai} ideas and ${ay} YouTube ideas${skip?` · skipped ${skip} already there`:''}`);
 }
 async function importVideoData(data){
   const vids = Array.isArray(data) ? data : (data.videos || []);
