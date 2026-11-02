@@ -458,6 +458,17 @@ details.wwcard.ww-not{box-shadow:inset 3px 0 0 var(--line2)} details.wwcard.ww-c
 details.nf{border:1px solid var(--line2);border-radius:14px;padding:4px 14px;margin-bottom:14px;background:var(--field)}
 details.nf>summary{cursor:pointer;font-weight:700;padding:10px 0;color:var(--mint);font-size:13px}
 details.nf[open]>summary{margin-bottom:6px}
+/* ---------- instagram history + formats ---------- */
+.igp{display:flex;flex-direction:column;gap:4px}
+.igp-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+.igp-row b{font-variant-numeric:tabular-nums}
+.igp-row a{margin-left:auto;font-weight:700;text-decoration:none}
+.chk-flag{color:var(--warn);font-weight:800;font-size:11.5px}
+.lr-m .ig{color:var(--ink2);margin-left:6px}
+.warn-ico{flex:none}
+.sitem .warn-line{color:var(--warn);font-weight:700}
+.fmt-chip{border-color:rgba(95,209,167,.35);color:var(--mint)}
+details.igold>summary h3{color:var(--ink2)}
 /* ---------- login ---------- */
 .login{max-width:400px;margin:12vh auto;padding:30px}
 .login h1{font-size:30px;letter-spacing:.16em;font-weight:800}
@@ -469,6 +480,7 @@ details.nf[open]>summary{margin-bottom:6px}
 <div id="modal-root"></div>
 <script>window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || null;</script>
 <script src="firebase-config.js" onerror="void 0"></script>
+<script src="ig-sync.js" onerror="void 0"></script>
 <script type="module">
 /* =========================================================================
    VERUS Content Hub — single-page app
@@ -491,6 +503,9 @@ const STATUSES = ['To film','Edited','Scheduled','Posted'];
 const STATUS_ICON = {'To film':'🎬','Edited':'✂️','Scheduled':'⏰','Posted':'✅'};
 const STATUS_CLS = {'To film':'s-tofilm','Edited':'s-edited','Scheduled':'s-sched','Posted':'s-posted'};
 const RECYCLE = {'':'Not decided', repost:'Repost as is', remix:'Remix / re-edit', combine:'Combine with others', retire:'Retire'};
+const FORMATS = [['reel','Reel','🎞️'],['carousel','Carousel','🗂️'],['post','Post','🖼️']];
+const fmtOf = p => FORMATS.find(f=>f[0]===(p.format||'reel')) || FORMATS[0];
+const fmtChip = p => { const f = fmtOf(p); return `<span class="chip fmt-chip">${f[2]} ${f[1]}</span>`; };
 const HORIZONS = [['current','Current plan'],['medium','Medium term'],['long','Long term']];
 const plat = id => PLATFORMS.find(p=>p.id===id);
 const setHash = h => { try { history.replaceState(null,'','#'+h); } catch {} };
@@ -698,7 +713,7 @@ const S = {
   cal:{ month: new Date(new Date().getFullYear(), new Date().getMonth(), 1), sel: todayISO() },
   idf:{ q:'', series:'', showScheduled:false, review:'all', who:(()=>{ try{ return localStorage.getItem('verus_idwho')||'all'; }catch{ return 'all'; } })() },
   ytwho:(()=>{ try{ return localStorage.getItem('verus_ytwho')||'all'; }catch{ return 'all'; } })(),
-  lf:{ funnel:'all', recycle:'all', ready:false, sort:'new', q:'' },
+  lf:{ funnel:'all', recycle:'all', format:'all', ready:false, sort:'new', q:'' },
   rv:{ platform:'all', funnel:'all', type:'all', from:'', to:'', sort:'views', dir:-1, best:'views' },
   wk: iso(mondayOf(new Date())),
   rf:{ author:'all', q:'' },
@@ -714,6 +729,8 @@ const repostsOf = id => S.posts.filter(x => x.repostOf === id);
 const isRepostEntry = p => !!p.repostOf && S.posts.some(x => x.id === p.repostOf);
 const timesReposted = p => (p.repostsManual || 0) + repostsOf(p.id).filter(isPosted).length;
 const repostReady = p => !isRepostEntry(p) && (isPosted(p) || p.source==='manual') && !!lastDate(p) && weeksSince(lastDate(p)) >= (S.settings?.repostWeeks ?? 12) && p.recycle !== 'retire';
+const notInLib = p => p.source!=='manual' && !isPosted(p) && !!p.date && p.date <= todayISO();
+const igOld = p => p.igStatus === 'old';
 const totalViews = p => (p.platforms||[]).reduce((a,pl)=>a+(p.stats?.[pl]?.views||0),0);
 const byCreated = (a,b) => (a.createdAt||0)-(b.createdAt||0);
 
@@ -829,7 +846,7 @@ function viewCalendar(){
       const cls = ['day', d.getMonth()!==m.getMonth()?'out':'', ds===today?'today':'', ds===S.cal.sel?'selday':''].join(' ');
       days += `<div class="${cls}" data-act="day" data-date="${ds}" data-n="${posts.length}">
         <span class="dnum">${d.getDate()}</span>
-        ${posts.length ? `<div class="bands">${posts.map(p=>{ const f = funnelOf(p.funnelId); return `<div class="band ${STATUS_CLS[p.status]||''}" style="background-color:${esc(f.color)};color:${textOn(f.color)}" data-act="openPost" data-id="${p.id}" title="${esc(p.title)} — ${esc(p.status)}"><span class="bt">${p.repostOf?'↻ ':''}${esc(p.title)}</span><span class="bs">${STATUS_ICON[p.status]||''}</span></div>`; }).join('')}</div>` : ''}
+        ${posts.length ? `<div class="bands">${posts.map(p=>{ const f = funnelOf(p.funnelId); return `<div class="band ${STATUS_CLS[p.status]||''}" style="background-color:${esc(f.color)};color:${textOn(f.color)}" data-act="openPost" data-id="${p.id}" title="${esc(p.title)} — ${esc(p.status)} · ${fmtOf(p)[1]}${notInLib(p)?' · ⚠️ Not in the Library yet: mark it Posted to add it':''}"><span class="bt">${p.repostOf?'↻ ':''}${esc(p.title)}</span><span class="bs">${notInLib(p)?'⚠️':''}${fmtOf(p)[2]}${STATUS_ICON[p.status]||''}</span></div>`; }).join('')}</div>` : ''}
       </div>`;
     }
     weeks += `<div class="cal-week ${wkIso===selMon?'sel':''}"><div class="cal-days">${days}</div>${mixBar(mixCounts(cur))}</div>`;
@@ -848,7 +865,7 @@ function viewCalendar(){
   <div class="cal-wrap">
     ${sec('cal-month', `<h3>Month</h3><span class="cnt">${S.posts.filter(p=>p.date && p.source!=='manual' && parseISO(p.date).getMonth()===m.getMonth() && parseISO(p.date).getFullYear()===m.getFullYear()).length} posts</span>`, `
       <div class="legend">${S.settings.funnels.map(f=>`<span><i style="background:${esc(f.color)}"></i>${esc(f.name)}</span>`).join('')}
-        <span class="tiny" style="font-weight:500">🎬 To film · ✂️ Edited · ⏰ Scheduled · ✅ Posted</span></div>
+        <span class="tiny" style="font-weight:500">🎬 To film · ✂️ Edited · ⏰ Scheduled · ✅ Posted · 🎞️ Reel · 🗂️ Carousel · 🖼️ Post · ⚠️ Not in Library yet</span></div>
       <div class="cal">
         <div class="cal-dow">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<div>${d}</div>`).join('')}</div>
         ${weeks}
@@ -866,9 +883,9 @@ function calSidebar(){
       <div class="dh"><span>${fmtDay(ds)}</span><button class="icon-btn" data-act="newPost" data-date="${ds}" title="Add post on ${fmtDay(ds)}">＋</button></div>
       ${posts.map(p=>{ const f = funnelOf(p.funnelId); return `<div class="sitem" data-act="openPost" data-id="${p.id}">
         <div class="sw" style="background:${esc(f.color)}"></div>
-        <div style="min-width:0"><div class="st">${p.repostOf?'↻ ':''}${esc(p.title)}</div>
+        <div style="min-width:0"><div class="st">${notInLib(p)?'<span class="warn-ico" title="Not in the Library yet">⚠️</span> ':''}${p.repostOf?'↻ ':''}${esc(p.title)}</div>
         <div class="sm"><span>${p.time?`<b class="tm">${fmtTime(p.time)}</b> · `:''}${esc(funnelLabel(p.funnelId,p.typeId))}</span></div>
-        <div class="sm"><span>${STATUS_ICON[p.status]||''} ${esc(p.status)}</span>${platChips(p.platforms)}</div></div></div>`; }).join('') || `<div class="tiny" style="padding:0 2px 4px">—</div>`}
+        <div class="sm"><span>${STATUS_ICON[p.status]||''} ${esc(p.status)}</span>${fmtChip(p)}${platChips(p.platforms)}</div>${notInLib(p)?`<div class="sm warn-line">⚠️ Not in the Library yet. Mark it Posted to add it.</div>`:''}</div></div>`; }).join('') || `<div class="tiny" style="padding:0 2px 4px">—</div>`}
     </div>`;
   }
   return sec('cal-week', `<h3>Week of ${mon.toLocaleDateString('en-IE',{day:'numeric',month:'short'})} – ${sun.toLocaleDateString('en-IE',{day:'numeric',month:'short'})}</h3>`, `
@@ -886,7 +903,7 @@ function funnelOptions(sel){ return S.settings.funnels.map(f=>`<option value="${
 function openPostEditor(post={}, opts={}){
   const isNew = !post.id;
   const p = clean({ title:'', date: isNew && post.source!=='manual' ? todayISO() : '', funnelId: S.settings.funnels[0]?.id || '', typeId:'', status: post.source==='manual' ? 'Posted' : 'To film',
-    platforms:['ig','tt'], notes:'', link:'', lastPosted:'', repostOf:'', screenshotId:'', thumbId:'', stats:{}, recycle:'', source:'calendar', ...post });
+    platforms:['ig','tt'], format:'reel', notes:'', link:'', lastPosted:'', repostOf:'', screenshotId:'', thumbId:'', stats:{}, recycle:'', source:'calendar', ...post });
   const manual = p.source === 'manual';
   const fresh = new Set(); // images uploaded during this edit
   const toDelete = new Set();
@@ -909,6 +926,7 @@ function openPostEditor(post={}, opts={}){
       <div class="field"><label class="f">Funnel</label><select id="pe-funnel">${funnelOptions(p.funnelId)}</select></div>
       <div class="field"><label class="f">Content type</label><select id="pe-type">${typeOptions(p.funnelId,p.typeId)}</select></div>
     </div>
+    <div class="field"><label class="f">Format</label><div class="pill-sel" id="pe-format">${FORMATS.map(([k,n,i])=>`<label class="${(p.format||'reel')===k?'on':''}"><input type="radio" name="pe-format" value="${k}" ${(p.format||'reel')===k?'checked':''}>${i} ${n}</label>`).join('')}</div></div>
     <div class="field"><label class="f" for="pe-link">Link to the post</label><input id="pe-link" type="url" inputmode="url" value="${esc(p.link||'')}" placeholder="https://www.instagram.com/reel/…"></div>
     <div class="field"><label class="f">Platforms</label><div class="pill-sel" id="pe-plats">${PLATFORMS.map(pl=>`<label class="${p.platforms.includes(pl.id)?'on':''}"><input type="checkbox" value="${pl.id}" ${p.platforms.includes(pl.id)?'checked':''}>${pl.name}</label>`).join('')}</div></div>
     <div class="field"><label class="f">Notes / caption / why we're posting it</label><textarea id="pe-notes" rows="3">${esc(p.notes)}</textarea></div>
@@ -978,6 +996,7 @@ function openPostEditor(post={}, opts={}){
     const im = $('.prev img',el); if (im) im.onclick = () => lightbox(im.dataset.full);
   };
 
+  $('#pe-format',m).onchange = e => { p.format = e.target.value; $$('#pe-format label',m).forEach(l => l.classList.toggle('on', l.querySelector('input').checked)); };
   $('#pe-funnel',m).onchange = e => { p.funnelId = e.target.value; $('#pe-type',m).innerHTML = typeOptions(p.funnelId,''); };
   $('#pe-status',m).onchange = () => { readStats(); drawStats(); imgField('screenshotId'); };
   $('#pe-plats',m).onchange = e => { readStats(); const v = e.target.value; e.target.closest('label').classList.toggle('on', e.target.checked);
@@ -989,6 +1008,7 @@ function openPostEditor(post={}, opts={}){
     rpBox.onchange = () => { $('#pe-orig-wrap',m).hidden = !rpBox.checked; };
     $('#pe-orig',m).onchange = e => { const o = S.posts.find(x=>x.id===e.target.value); if (!o) return;
       if (!$('#pe-title',m).value.trim()) $('#pe-title',m).value = o.title;
+      if (o.format) { p.format = o.format; $$('#pe-format input',m).forEach(x => { x.checked = x.value===o.format; x.closest('label').classList.toggle('on', x.checked); }); }
       $('#pe-funnel',m).value = o.funnelId; p.funnelId = o.funnelId; $('#pe-type',m).innerHTML = typeOptions(o.funnelId, o.typeId);
       if (!$('#pe-link',m).value.trim() && o.link) {} };
   }
@@ -1474,14 +1494,17 @@ function openYTEditor(y={}){
 function lastDate(p){ const t = todayISO(); const ds = [p.lastPosted, p.date, ...repostsOf(p.id).filter(isPosted).map(x=>x.date)].filter(d => d && d <= t).sort(); return ds.pop() || p.date || ''; }
 const coverOf = p => p.thumbId || p.screenshotId || (p.repostOf ? (S.posts.find(x=>x.id===p.repostOf)?.thumbId || S.posts.find(x=>x.id===p.repostOf)?.screenshotId || '') : '');
 function viewLibrary(){
-  const {funnel, recycle, sort, q} = S.lf; const ql = q.toLowerCase();
-  let list = S.posts.filter(p => (isPosted(p) || p.source==='manual') && !isRepostEntry(p)
+  const {funnel, recycle, format, sort, q} = S.lf; const ql = q.toLowerCase();
+  let all = S.posts.filter(p => (isPosted(p) || p.source==='manual') && !isRepostEntry(p)
     && (funnel==='all' || p.funnelId===funnel)
+    && (format==='all' || (p.format||'reel')===format)
     && (recycle==='all' || (p.recycle||'')===recycle)
     && (!ql || [p.title,p.notes,p.link].join(' ').toLowerCase().includes(ql)));
   const dk = p => lastDate(p) || '0000-00-00';
+  const olds = all.filter(igOld).sort((a,b)=>a.title.localeCompare(b.title));
+  let list = all.filter(p => !igOld(p));
   list.sort(sort==='old' ? (a,b)=>dk(a).localeCompare(dk(b)) : sort==='views' ? (a,b)=>totalViews(b)-totalViews(a) : (a,b)=>dk(b).localeCompare(dk(a)));
-  const ready = list.filter(repostReady).sort((a,b)=>lastDate(a).localeCompare(lastDate(b)));
+  const ready = list.filter(p => repostReady(p) || (p.igPosts?.length && p.recycle !== 'retire' && weeksSince(lastDate(p)) >= (S.settings?.repostWeeks ?? 12))).sort((a,b)=>lastDate(a).localeCompare(lastDate(b)));
   const readyCount = ready.length;
   const readySec = sec('lib-ready', `<span class="fdot" style="background:var(--warn);color:var(--warn)"></span><h3>Ready to repost</h3><span class="cnt warn">${readyCount}</span>`,
     readyCount ? `<p class="tiny" style="margin:0 0 10px">Last posted ${S.settings.repostWeeks}+ weeks ago, longest first. Change the number of weeks in Settings.</p><div class="lrows">${ready.map(libRow).join('')}</div>`
@@ -1494,8 +1517,11 @@ function viewLibrary(){
     return sec(`lib-${f.id}`, `<span class="fdot" style="background:${esc(f.color)}"></span><h3>${esc(f.name)}</h3><span class="cnt">${items.length}</span>`,
       `<div class="lrows">${items.map(libRow).join('')}</div>`, {style:`--fc:${esc(f.color)}`, cls:'fsec'});
   }).join('');
+  const ig = window.IG_SYNC;
+  const oldSec = olds.length ? sec('lib-igold', `<span class="fdot" style="background:var(--ink3);color:var(--ink3)"></span><h3>Older than 6 months / not found on Instagram</h3><span class="cnt">${olds.length}</span>`,
+    `<p class="tiny" style="margin:0 0 10px">No post of these on @danieldavey's Instagram since ${ig?fmtDate(ig.since):'May 2026'}. Either they went out before that or they were never posted as a reel. Checked ${ig?fmtDate(ig.scraped):''}.</p><div class="lrows">${olds.map(libRow).join('')}</div>`, {cls:'fsec igold', style:'--fc:var(--ink3)', def:false}) : '';
   return `
-  <div class="vhead"><h2>Library</h2><span class="muted">${list.length} video${list.length===1?'':'s'}${readyCount?` · <b style="color:var(--warn)">${readyCount}</b> ready to repost`:''}</span>
+  <div class="vhead"><h2>Library</h2><span class="muted">${list.length+olds.length} video${list.length+olds.length===1?'':'s'}${readyCount?` · <b style="color:var(--warn)">${readyCount}</b> ready to repost`:''}</span>
     ${allToggle()}
     <span class="btn upload-btn">Import videos<input type="file" data-chg="importVideos"></span>
     <button class="btn primary" data-act="newOld">+ Add old video</button></div>
@@ -1503,10 +1529,13 @@ function viewLibrary(){
     <input type="text" id="lf-q" placeholder="Search…" value="${esc(q)}" data-inp="lfQ">
     <select id="lf-funnel" data-chg="lfFunnel"><option value="all">All funnels</option>${S.settings.funnels.map(f=>`<option value="${f.id}" ${f.id===funnel?'selected':''}>${esc(f.name)}</option>`).join('')}</select>
     <select id="lf-recycle" data-chg="lfRecycle"><option value="all">Any next step</option>${Object.entries(RECYCLE).map(([k,v])=>`<option value="${k}" ${k===recycle?'selected':''}>${v}</option>`).join('')}</select>
+    <select id="lf-format" data-chg="lfFormat"><option value="all">Reels, carousels & posts</option>${FORMATS.map(([k,n,i])=>`<option value="${k}" ${k===format?'selected':''}>${i} ${n}s only</option>`).join('')}</select>
     <select id="lf-sort" data-chg="lfSort"><option value="new" ${sort==='new'?'selected':''}>Most recently posted</option><option value="old" ${sort==='old'?'selected':''}>Longest since posted</option><option value="views" ${sort==='views'?'selected':''}>Most views</option></select>
   </div>
   ${list.length ? readySec : ''}
-  ${groups || `<div class="card empty">Nothing here yet. Posts you mark as Posted land here automatically, and you can add older videos with “+ Add old video” or “Import videos”.</div>`}`;
+  ${groups}
+  ${oldSec}
+  ${groups || oldSec ? '' : `<div class="card empty">Nothing here yet. Posts you mark as Posted land here automatically, and you can add older videos with “+ Add old video” or “Import videos”.</div>`}`;
 }
 const openRows = new Set();
 function libRow(p){
@@ -1514,22 +1543,26 @@ function libRow(p){
   const pls = p.platforms || [];
   const tot = k => pls.reduce((a,pl)=>a+(p.stats?.[pl]?.[k]||0),0);
   const has = pls.some(pl => p.stats?.[pl] && Object.values(p.stats[pl]).some(v=>v!=null));
+  const igp = p.igPosts || [];
+  const igLine = igp.length ? `<span class="ig">· IG ${igp.length>1?igp.length+'× ':''}${fmtDate(igp[igp.length-1].d)}${igp.some(x=>x.c)?' <span class="chk-flag">check</span>':''}</span>` : '';
+  const igTable = igp.length ? `<div><div class="tiny" style="margin-bottom:6px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)">On Instagram (@danieldavey)</div><div class="igp">${igp.map(x=>`<div class="igp-row"><span>${fmtDate(x.d)}</span><span><b>${fmtNum(x.v)}</b> views</span>${x.c?`<span class="chk-flag" title="Best guess from the caption: check this is the same video">⚠ check match</span>`:''}<a href="${esc(x.u)}" target="_blank" rel="noopener" data-act="extLink">Open reel ↗</a></div>`).join('')}</div></div>` : '';
   const stats = has ? `<span><b>${fmtNum(tot('views'))}</b> views</span><span><b>${fmtNum(tot('comments'))}</b> comments</span><span><b>${fmtNum(tot('follows'))}</b> follows</span>` : `<span class="na">No stats yet</span>`;
   const statRows = pls.filter(pl=>p.stats?.[pl]).map(pl => { const st = p.stats[pl]; return `<tr><td>${plat(pl).name}</td>${['views','comments','shares','saves','follows'].map(k=>`<td class="num">${plat(pl).metrics.includes(k)?(st[k]==null?'—':fmtNum(st[k])):'·'}</td>`).join('')}<td class="num">${st.avgWatch==null?'—':fmtWatch(st.avgWatch)}</td></tr>`; }).join('');
   return `<details class="lrow" data-row="${p.id}" style="--fc:${esc(f.color)}" ${op?'open':''}>
     <summary><span class="lr-t">${esc(p.title)}</span>
-      <span class="lr-m">${ld?esc(halfWeeks(ld)):'No date'}${tr?`<span class="rp">↻ ${tr}</span>`:''}${repostReady(p)?` <span class="rdy">♻︎ Ready</span>`:''}</span>
+      <span class="lr-m">${ld?esc(halfWeeks(ld)):'No date'}${tr?`<span class="rp">↻ ${tr}</span>`:''}${igLine}${repostReady(p)?` <span class="rdy">♻︎ Ready</span>`:''}</span>
       <span class="lr-s">${stats}</span><span class="chev" aria-hidden="true"></span></summary>
     <div class="lr-b">
       <div class="lr-img">${img?`<img ${op?'data-img':'data-limg'}="${thumb(img)}" data-full="${img}" alt="Thumbnail for ${esc(p.title)}">`:`<div class="noimg">No thumbnail</div>`}</div>
       <div class="lr-d">
-        <div class="row" style="gap:6px">${fChip(p.funnelId,p.typeId)}${platChips(pls)}${p.recycle?`<span class="chip">♻︎ ${RECYCLE[p.recycle]}</span>`:''}</div>
+        <div class="row" style="gap:6px">${fmtChip(p)}${fChip(p.funnelId,p.typeId)}${platChips(pls)}${p.recycle?`<span class="chip">♻︎ ${RECYCLE[p.recycle]}</span>`:''}</div>
         <dl class="lr-dl">
           <div><dt>First posted</dt><dd>${p.date?fmtDate(p.date):'—'}</dd></div>
           <div><dt>Last posted</dt><dd>${ld && ld!==p.date?fmtDate(ld):'Not reposted'}</dd></div>
           <div><dt>Since posted</dt><dd>${ld?esc(halfWeeks(ld)):'—'}</dd></div>
           <div><dt>Times reposted</dt><dd>${tr}</dd></div>
         </dl>
+        ${igTable}
         ${statRows?`<div class="tbl-wrap"><table class="tbl mini"><thead><tr><th>Platform</th><th class="num">Views</th><th class="num">Comm.</th><th class="num">Shares</th><th class="num">Saves</th><th class="num">Follows</th><th class="num">Watch</th></tr></thead><tbody>${statRows}</tbody></table></div>`:''}
         ${p.notes?`<p class="tiny" style="margin:0">${esc(p.notes)}</p>`:''}
         <div class="row" style="gap:6px">
@@ -1551,7 +1584,7 @@ function libCard(p){
       <div class="lm">${p.lastPosted?`Last posted <b>${fmtDate(p.lastPosted)}</b>`:p.date?`Posted <b>${fmtDate(p.date)}</b>`:'No date yet'}</div>
       ${p.lastPosted&&p.date&&p.date!==p.lastPosted?`<div class="lm">First posted ${fmtDate(p.date)}</div>`:''}
       <div class="lm">${esc(typeName(p.funnelId,p.typeId)||'No type')}${tv?` · ${fmtNum(tv)} views`:''}</div>
-      <div class="lc">${platChips(p.platforms)}${p.recycle?`<span class="chip">♻︎ ${RECYCLE[p.recycle]}</span>`:''}</div>
+      <div class="lc">${fmtChip(p)}${platChips(p.platforms)}${p.recycle?`<span class="chip">♻︎ ${RECYCLE[p.recycle]}</span>`:''}</div>
       ${p.link?`<a class="lk" href="${esc(p.link)}" target="_blank" rel="noopener" data-act="extLink">Open post ↗</a>`:''}</div>
   </div>`;
 }
@@ -2164,6 +2197,7 @@ document.addEventListener('change', async e => {
     case 'lfFunnel': S.lf.funnel = t.value; renderView(); break;
     case 'lfRecycle': S.lf.recycle = t.value; renderView(); break;
     case 'lfSort': S.lf.sort = t.value; renderView(); break;
+    case 'lfFormat': S.lf.format = t.value; renderView(); break;
     case 'lfReady': S.lf.ready = t.checked; renderView(); break;
     case 'rvPlatform': S.rv.platform = t.value; renderView(); break;
     case 'rvFunnel': S.rv.funnel = t.value; S.rv.type = 'all'; renderView(); break;
@@ -2206,6 +2240,53 @@ document.addEventListener('focusout', async e => {
 });
 document.addEventListener('keydown', e => { if (e.key==='Escape') { const lb = $('.lightbox'); if (lb) { lb.remove(); return; } if (modalState && !document.querySelector('body > .overlay')) closeModal(false); } });
 
+// ---------- Instagram history (one-off sync from a scrape of @danieldavey) ----------
+let igSyncing = false;
+async function applyIgSync(){
+  const ig = window.IG_SYNC;
+  if (!ig || igSyncing || seeding || !S.settings || !S.loaded.has('posts')) return;
+  const doSync = S.settings.igSync !== ig.version, doAdd = !!ig.add && S.settings.igAdd !== ig.addVersion;
+  if (!doSync && !doAdd) return;
+  igSyncing = true;
+  if (doSync) try {
+    const norm = x => String(x||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+    let n = 0;
+    for (const v of ig.videos) {
+      const p = S.posts.find(x => x.source==='manual' && v.l && x.link===v.l) || S.posts.find(x => x.source==='manual' && norm(x.title)===norm(v.t) && (!v.pd || x.date===v.pd));
+      if (!p) continue;
+      const patch = { igPosts: v.p, igStatus: v.p.length ? 'recent' : 'old', igCheckedAt: ig.scraped };
+      if (v.p.length) {
+        const first = v.p[0].d, last = v.p[v.p.length-1].d, sum = v.p.reduce((a,x)=>a+(x.v||0),0);
+        if (p.date === v.pd) patch.date = first;
+        if (v.p.length > 1 && (!p.lastPosted || p.lastPosted < last)) patch.lastPosted = last;
+        if (p.stats?.ig?.views == null) patch.stats = {...(p.stats||{}), ig:{...(p.stats?.ig||{}), views: sum}};
+        if ((p.repostsManual||0) < v.p.length-1) patch.repostsManual = v.p.length-1;
+        if (!(p.platforms||[]).includes('ig')) patch.platforms = ['ig', ...(p.platforms||[])];
+      }
+      await store.update('posts', p.id, patch); n++;
+    }
+    await saveSettings(s => { s.igSync = ig.version; });
+    if (n) toast(`Added Instagram dates and views to ${n} videos`);
+  } catch(e){ console.warn('IG sync failed', e); }
+  // big reels that had no video in the hub: add them as library videos
+  if (doAdd) try {
+    let n = 0;
+    for (const v of ig.add) {
+      const url = v.p[0].u;
+      if (S.posts.some(x => (x.igPosts||[]).some(y => y.u === url))) continue;
+      let thumbId = ''; try { thumbId = await uploadImage(dataURLtoBlob(v.img)); } catch(e){ console.warn('thumb failed', e); }
+      const first = v.p[0].d, last = v.p[v.p.length-1].d, sum = v.p.reduce((a,x)=>a+(x.v||0),0);
+      await store.add('posts', { title: v.t, date: first, lastPosted: v.p.length>1 ? last : '', link: v.p[v.p.length-1].u, funnelId: v.f, typeId: v.ty,
+        status:'Posted', source:'manual', format:'reel', platforms:['ig'], notes: v.n, screenshotId:'', thumbId, stats:{ig:{views:sum}}, recycle:'',
+        repostsManual: v.p.length-1, igPosts: v.p, igStatus:'recent', igCheckedAt: ig.scraped, createdBy: 'Instagram scan', createdAt: Date.now() });
+      n++;
+    }
+    await saveSettings(s => { s.igAdd = ig.addVersion; });
+    if (n) toast(`Added ${n} big Instagram reels to the Library`);
+  } catch(e){ console.warn('IG add failed', e); }
+  igSyncing = false;
+}
+
 // ---------- seeding ----------
 let seeding = false;
 async function seedEverything(){
@@ -2220,6 +2301,7 @@ async function seedEverything(){
   if (!lib) { try { const r = await fetch('library-seed.json', {cache:'no-store'}); if (r.ok) lib = await r.json(); } catch {} }
   if (lib) await importVideoData(lib);
   seeding = false;
+  applyIgSync();
 }
 
 // ---------- boot ----------
@@ -2233,11 +2315,11 @@ function resolveMe(){
 function startSync(){
   store.subscribe('settings', async (data, meta) => {
     if (!data) { if (!meta?.fromCache) await seedEverything(); return; }
-    S.settings = data; S.loaded.add('settings'); resolveMe();
+    S.settings = data; S.loaded.add('settings'); resolveMe(); setTimeout(applyIgSync, 0);
     if (!S.me) { let n = null; try { n = localStorage.getItem('verus_demo_user'); } catch {} S.me = {name: data.members.find(x=>x.name===n)?.name || data.members[0]?.name || 'Milo', email:''}; }
     requestRender();
   });
-  COLLS.forEach(c => store.subscribe(c, list => { S[c] = list; S.loaded.add(c); if (S.settings) requestRender(); }));
+  COLLS.forEach(c => store.subscribe(c, list => { S[c] = list; S.loaded.add(c); if (S.settings) requestRender(); if (c==='posts') applyIgSync(); }));
 }
 function showDenied(){
   $('#app').innerHTML = `<div class="card login"><h1>VERUS</h1><p>This account (${esc(AUTH?.user?.email||'')}) isn't on the team list in the Firestore security rules.</p><p class="tiny">Ask Milo to add your email to <code>firestore.rules</code> and publish them again.</p><button class="btn" id="so">Sign out</button></div>`;
