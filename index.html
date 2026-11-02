@@ -728,7 +728,8 @@ const statsDue = p => isPosted(p) && p.source!=='manual' && p.date && daysSince(
 const repostsOf = id => S.posts.filter(x => x.repostOf === id);
 const isRepostEntry = p => !!p.repostOf && S.posts.some(x => x.id === p.repostOf);
 const timesReposted = p => (p.repostsManual || 0) + repostsOf(p.id).filter(isPosted).length;
-const repostReady = p => !isRepostEntry(p) && (isPosted(p) || p.source==='manual') && !!lastDate(p) && weeksSince(lastDate(p)) >= (S.settings?.repostWeeks ?? 12) && p.recycle !== 'retire';
+const pendingRepost = p => repostsOf(p.id).filter(x => !isPosted(x) || (x.date||'') > todayISO()).sort((a,b)=>(a.date||'').localeCompare(b.date||''))[0];
+const repostReady = p => !isRepostEntry(p) && !pendingRepost(p) && (isPosted(p) || p.source==='manual') && !!lastDate(p) && weeksSince(lastDate(p)) >= (S.settings?.repostWeeks ?? 12) && p.recycle !== 'retire';
 const notInLib = p => p.source!=='manual' && !isPosted(p) && !!p.date && p.date <= todayISO();
 const igOld = p => p.igStatus === 'old';
 const totalViews = p => (p.platforms||[]).reduce((a,pl)=>a+(p.stats?.[pl]?.views||0),0);
@@ -916,7 +917,7 @@ function openPostEditor(post={}, opts={}){
     ${manual ? '' : `<div class="field repost-box"><label class="chk-line"><input type="checkbox" id="pe-isrepost" ${p.repostOf?'checked':''}> This is a repost of an older video</label>
       <div id="pe-orig-wrap" ${p.repostOf?'':'hidden'}><label class="f" for="pe-orig">Original video</label>
         <select id="pe-orig"><option value="">Choose the original…</option>${S.posts.filter(x => x.id!==p.id && !x.repostOf && (isPosted(x)||x.source==='manual')).sort((a,b)=>a.title.localeCompare(b.title)).map(o=>`<option value="${o.id}" ${o.id===p.repostOf?'selected':''}>${esc(o.title)}${o.date?' · '+fmtDate(o.date):''}</option>`).join('')}</select>
-        <div class="tiny" style="margin-top:4px">It counts as a repost on the original in the Library, so it won't show up twice.</div></div></div>`}
+        <div class="tiny" style="margin-top:4px">It counts as a repost on the original in the Library, so it won't show up twice.</div><div class="tiny" id="pe-orig-info" style="margin-top:6px;color:var(--mint)"></div></div></div>`}
     <div class="field"><label class="f" for="pe-title">Full title</label><input id="pe-title" value="${esc(p.title)}" placeholder="e.g. Myth: carbs at night make you fat"></div>
     <div class="grid2">
       <div class="field"><label class="f" for="pe-date">${manual?'First posted (optional)':'Posting date'}</label><div class="row" style="flex-wrap:nowrap;gap:6px"><input id="pe-date" type="date" value="${esc(p.date)}">${manual?'':`<input id="pe-time" type="time" value="${esc(p.time||'')}" aria-label="Posting time" style="max-width:120px">`}</div><div class="tiny" id="pe-date-wk"></div></div>
@@ -1003,10 +1004,24 @@ function openPostEditor(post={}, opts={}){
     p.platforms = e.target.checked ? [...new Set([...p.platforms, v])] : p.platforms.filter(x=>x!==v);
     p.platforms.sort((a,b)=>PLATFORMS.findIndex(x=>x.id===a)-PLATFORMS.findIndex(x=>x.id===b)); drawStats(); };
   drawStats(); imgField('screenshotId'); imgField('thumbId');
+  // copy the original video's details (thumbnail, caption, platforms, format) into a repost
+  async function fillFrom(o){
+    if (!$('#pe-title',m).value.trim()) $('#pe-title',m).value = o.title;
+    if (!$('#pe-notes',m).value.trim() && o.notes) $('#pe-notes',m).value = o.notes;
+    if (o.format) { p.format = o.format; $$('#pe-format input',m).forEach(x => { x.checked = x.value===o.format; x.closest('label').classList.toggle('on', x.checked); }); }
+    $('#pe-funnel',m).value = o.funnelId; p.funnelId = o.funnelId; $('#pe-type',m).innerHTML = typeOptions(o.funnelId, o.typeId);
+    if (o.platforms?.length) { readStats(); p.platforms = [...o.platforms]; $$('#pe-plats input',m).forEach(x => { x.checked = p.platforms.includes(x.value); x.closest('label').classList.toggle('on', x.checked); }); drawStats(); }
+    const ig = o.igPosts || [], tv = totalViews(o), ld = lastDate(o);
+    const info = $('#pe-orig-info',m); if (info) info.textContent = `Last posted ${ld?fmtDate(ld):'—'}${ig.length>1?` · posted ${ig.length} times`:''}${tv?` · ${fmtNum(tv)} views so far`:''}`;
+    const cover = o.thumbId || o.screenshotId;
+    if (cover && !p.thumbId) { try { const src = await getImg(cover); if (src) { const nid = await uploadImage(dataURLtoBlob(src)); fresh.add(nid); p.thumbId = nid; imgField('thumbId'); } } catch(e){ console.warn('copy thumb failed', e); } }
+  }
   const rpBox = $('#pe-isrepost',m);
+  if (opts.repostFrom) { const o = S.posts.find(x=>x.id===opts.repostFrom); if (o) setTimeout(()=>{ fillFrom(o); $('#pe-date',m).focus(); }, 40); }
   if (rpBox) {
     rpBox.onchange = () => { $('#pe-orig-wrap',m).hidden = !rpBox.checked; };
     $('#pe-orig',m).onchange = e => { const o = S.posts.find(x=>x.id===e.target.value); if (!o) return;
+      fillFrom(o);
       if (!$('#pe-title',m).value.trim()) $('#pe-title',m).value = o.title;
       if (o.format) { p.format = o.format; $$('#pe-format input',m).forEach(x => { x.checked = x.value===o.format; x.closest('label').classList.toggle('on', x.checked); }); }
       $('#pe-funnel',m).value = o.funnelId; p.funnelId = o.funnelId; $('#pe-type',m).innerHTML = typeOptions(o.funnelId, o.typeId);
@@ -1053,9 +1068,10 @@ function openPostEditor(post={}, opts={}){
       for (const did of toDelete) await deleteImage(did);
       fresh.clear(); closeModal(true); toast('Saved');
       if (!manual && p.date) { S.cal.sel = p.date; }
+      if (opts.repostFrom) toast(`Added to the calendar for ${fmtDate(p.date)}`);
     } catch(e){ console.error(e); $('#pe-save',m).disabled = false; err('Could not save: '+e.message); }
   };
-  setTimeout(()=>{ if (isNew) $('#pe-title',m).focus(); }, 30);
+  setTimeout(()=>{ if (isNew && !opts.repostFrom) $('#pe-title',m).focus(); }, 30);
 }
 
 // =====================================================================
@@ -1504,7 +1520,7 @@ function viewLibrary(){
   const olds = all.filter(igOld).sort((a,b)=>a.title.localeCompare(b.title));
   let list = all.filter(p => !igOld(p));
   list.sort(sort==='old' ? (a,b)=>dk(a).localeCompare(dk(b)) : sort==='views' ? (a,b)=>totalViews(b)-totalViews(a) : (a,b)=>dk(b).localeCompare(dk(a)));
-  const ready = list.filter(p => repostReady(p) || (p.igPosts?.length && p.recycle !== 'retire' && weeksSince(lastDate(p)) >= (S.settings?.repostWeeks ?? 12))).sort((a,b)=>lastDate(a).localeCompare(lastDate(b)));
+  const ready = list.filter(repostReady).sort((a,b)=>lastDate(a).localeCompare(lastDate(b)));
   const readyCount = ready.length;
   const readySec = sec('lib-ready', `<span class="fdot" style="background:var(--warn);color:var(--warn)"></span><h3>Ready to repost</h3><span class="cnt warn">${readyCount}</span>`,
     readyCount ? `<p class="tiny" style="margin:0 0 10px">Last posted ${S.settings.repostWeeks}+ weeks ago, longest first. Change the number of weeks in Settings.</p><div class="lrows">${ready.map(libRow).join('')}</div>`
@@ -1550,7 +1566,7 @@ function libRow(p){
   const statRows = pls.filter(pl=>p.stats?.[pl]).map(pl => { const st = p.stats[pl]; return `<tr><td>${plat(pl).name}</td>${['views','comments','shares','saves','follows'].map(k=>`<td class="num">${plat(pl).metrics.includes(k)?(st[k]==null?'—':fmtNum(st[k])):'·'}</td>`).join('')}<td class="num">${st.avgWatch==null?'—':fmtWatch(st.avgWatch)}</td></tr>`; }).join('');
   return `<details class="lrow" data-row="${p.id}" style="--fc:${esc(f.color)}" ${op?'open':''}>
     <summary><span class="lr-t">${esc(p.title)}</span>
-      <span class="lr-m">${ld?esc(halfWeeks(ld)):'No date'}${tr?`<span class="rp">↻ ${tr}</span>`:''}${igLine}${repostReady(p)?` <span class="rdy">♻︎ Ready</span>`:''}</span>
+      <span class="lr-m">${ld?esc(halfWeeks(ld)):'No date'}${tr?`<span class="rp">↻ ${tr}</span>`:''}${igLine}${pendingRepost(p)?` <span class="rp">📅 Reposting ${fmtDate(pendingRepost(p).date)}</span>`:repostReady(p)?` <span class="rdy">♻︎ Ready</span>`:''}</span>
       <span class="lr-s">${stats}</span><span class="chev" aria-hidden="true"></span></summary>
     <div class="lr-b">
       <div class="lr-img">${img?`<img ${op?'data-img':'data-limg'}="${thumb(img)}" data-full="${img}" alt="Thumbnail for ${esc(p.title)}">`:`<div class="noimg">No thumbnail</div>`}</div>
@@ -1568,6 +1584,7 @@ function libRow(p){
         <div class="row" style="gap:6px">
           ${p.link?`<a class="btn sm" href="${esc(p.link)}" target="_blank" rel="noopener" data-act="extLink">Open video ↗</a>`:''}
           <button class="btn sm primary" data-act="openPost" data-id="${p.id}">Edit</button>
+          <button class="btn sm primary" data-act="postAgain" data-id="${p.id}">📅 Post again</button>
           <button class="btn sm" data-act="repostToday" data-id="${p.id}">Reposted today</button>
         </div>
       </div>
@@ -1993,6 +2010,7 @@ document.addEventListener('click', async e => {
     case 'followEdit': openFollowLog(S.followers.find(x=>x.id===id)); break;
     case 'followDel': if (await askConfirm('Delete this follower log?')) await store.remove('followers', id); break;
     case 'copyHook': { const h = t.dataset.h; try { await navigator.clipboard.writeText(h); toast('Hook copied'); } catch { toast(h); } break; }
+    case 'postAgain': { e.stopPropagation(); const o = S.posts.find(x=>x.id===id); if (o) openPostEditor({repostOf: o.id, date:''}, {repostFrom: o.id}); break; }
     case 'repostToday': { const p = S.posts.find(x=>x.id===id); await store.update('posts', id, {lastPosted: todayISO(), repostsManual: (p?.repostsManual||0)+1}); toast('Marked as reposted today'); break; }
     case 'secAll': { const ds = $$('#view details.sec'); const top = ds.filter(d=>!d.classList.contains('sub')); const open = !top.some(d=>d.open);
       ds.forEach(d => { d.open = open; OPEN[d.dataset.sec] = open; }); try { localStorage.setItem('verus_sections', JSON.stringify(OPEN)); } catch {} syncAllLabel(); break; }
