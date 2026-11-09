@@ -446,6 +446,17 @@ details.wwcard.ww-not{box-shadow:inset 3px 0 0 var(--line2)} details.wwcard.ww-c
 .icard.rvc-approved{box-shadow:inset 3px 0 0 var(--mint)} .icard.rvc-refine{box-shadow:inset 3px 0 0 var(--warn)} .icard.rvc-denied{opacity:.55;box-shadow:inset 3px 0 0 var(--danger)}
 .rnote{font-size:12px;color:var(--warn);margin-top:5px;line-height:1.35}
 .qrev{display:inline-flex;gap:3px;margin-left:auto}
+/* favourites + filming (2026-11-09) */
+.it-row{display:flex;gap:6px;align-items:flex-start;justify-content:space-between}
+.favbtn{border:0;background:transparent;cursor:pointer;font-size:17px;line-height:1;color:var(--ink3);padding:1px 4px;border-radius:6px;flex:none}
+.favbtn:hover,.favbtn.on{color:#f0b85a}
+.chip.film{border-color:rgba(240,184,90,.45);color:var(--warn)} .chip.filmed{border-color:rgba(95,209,167,.45);color:var(--mint)} .chip.favs{color:#f0b85a;border-color:rgba(240,184,90,.3)}
+.icard.filmed{opacity:.72}
+.fav-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}.fav-grid .icard{margin-bottom:0}
+details.favsec{box-shadow:inset 0 3px 0 #f0b85a}
+.filmdot{position:absolute;top:5px;right:6px;z-index:3;font-size:11px;font-weight:800;line-height:18px;padding:0 5px;border-radius:7px;background:rgba(240,184,90,.9);color:#241600}
+.sitem.filmday{border-style:dashed;border-color:rgba(240,184,90,.45)}
+
 .qr{width:26px;height:26px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--ink3);cursor:pointer;font-weight:800;font-size:12px;display:grid;place-items:center;padding:0}
 .qr:hover{color:var(--ink);border-color:var(--ink3)}
 .qr.approved.on{background:var(--mintSoft);color:var(--mint);border-color:rgba(95,209,167,.5)}
@@ -825,10 +836,11 @@ function viewCalendar(){
   do {
     const wkIso = iso(cur); let days = '';
     for (let i=0;i<7;i++){
-      const d = addDays(cur,i), ds = iso(d), posts = postsOn(ds);
+      const d = addDays(cur,i), ds = iso(d), posts = postsOn(ds), films = filmsOn(ds);
       const cls = ['day', d.getMonth()!==m.getMonth()?'out':'', ds===today?'today':'', ds===S.cal.sel?'selday':''].join(' ');
       days += `<div class="${cls}" data-act="day" data-date="${ds}" data-n="${posts.length}">
         <span class="dnum">${d.getDate()}</span>
+        ${films.length ? `<span class="filmdot" title="Filming: ${esc(films.map(x=>x.title).join(', '))}">🎥${films.length>1?' '+films.length:''}</span>` : ''}
         ${posts.length ? `<div class="bands">${posts.map(p=>{ const f = funnelOf(p.funnelId); return `<div class="band ${STATUS_CLS[p.status]||''}" style="background-color:${esc(f.color)};color:${textOn(f.color)}" data-act="openPost" data-id="${p.id}" title="${esc(p.title)} — ${esc(p.status)}"><span class="bt">${p.repostOf?'↻ ':''}${esc(p.title)}</span><span class="bs">${STATUS_ICON[p.status]||''}</span></div>`; }).join('')}</div>` : ''}
       </div>`;
     }
@@ -848,7 +860,7 @@ function viewCalendar(){
   <div class="cal-wrap">
     ${sec('cal-month', `<h3>Month</h3><span class="cnt">${S.posts.filter(p=>p.date && p.source!=='manual' && parseISO(p.date).getMonth()===m.getMonth() && parseISO(p.date).getFullYear()===m.getFullYear()).length} posts</span>`, `
       <div class="legend">${S.settings.funnels.map(f=>`<span><i style="background:${esc(f.color)}"></i>${esc(f.name)}</span>`).join('')}
-        <span class="tiny" style="font-weight:500">🎬 To film · ✂️ Edited · ⏰ Scheduled · ✅ Posted</span></div>
+        <span class="tiny" style="font-weight:500">🎬 To film · ✂️ Edited · ⏰ Scheduled · ✅ Posted · 🎥 Filming day (idea)</span></div>
       <div class="cal">
         <div class="cal-dow">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<div>${d}</div>`).join('')}</div>
         ${weeks}
@@ -861,14 +873,16 @@ function calSidebar(){
   const sun = addDays(mon,6);
   let body = '';
   for (let i=0;i<7;i++){
-    const ds = iso(addDays(mon,i)), posts = postsOn(ds);
+    const ds = iso(addDays(mon,i)), posts = postsOn(ds), films = filmsOn(ds);
     body += `<div class="side-day ${ds===S.cal.sel?'hl':''}">
       <div class="dh"><span>${fmtDay(ds)}</span><button class="icon-btn" data-act="newPost" data-date="${ds}" title="Add post on ${fmtDay(ds)}">＋</button></div>
       ${posts.map(p=>{ const f = funnelOf(p.funnelId); return `<div class="sitem" data-act="openPost" data-id="${p.id}">
         <div class="sw" style="background:${esc(f.color)}"></div>
         <div style="min-width:0"><div class="st">${p.repostOf?'↻ ':''}${esc(p.title)}</div>
         <div class="sm"><span>${p.time?`<b class="tm">${fmtTime(p.time)}</b> · `:''}${esc(funnelLabel(p.funnelId,p.typeId))}</span></div>
-        <div class="sm"><span>${STATUS_ICON[p.status]||''} ${esc(p.status)}${p.caption?' · ✍︎ Caption':''}${p.driveLink?' · 📁 Drive':''}</span>${platChips(p.platforms)}</div></div></div>`; }).join('') || `<div class="tiny" style="padding:0 2px 4px">—</div>`}
+        <div class="sm"><span>${STATUS_ICON[p.status]||''} ${esc(p.status)}${p.caption?' · ✍︎ Caption':''}${p.driveLink?' · 📁 Drive':''}</span>${platChips(p.platforms)}</div></div></div>`; }).join('')}
+      ${films.map(x=>`<div class="sitem filmday" data-act="openIdea" data-id="${x.id}"><div class="sw" style="background:var(--warn)"></div><div style="min-width:0"><div class="st">🎥 ${esc(x.title)}</div><div class="sm"><span>${x.filmed?'🎬 Filmed':'Filming day'} · idea${favsOf(x).length?` · ★ ${esc(favsOf(x).join(', '))}`:''}</span></div></div></div>`).join('')}
+      ${posts.length||films.length ? '' : `<div class="tiny" style="padding:0 2px 4px">—</div>`}
     </div>`;
   }
   return sec('cal-week', `<h3>Week of ${mon.toLocaleDateString('en-IE',{day:'numeric',month:'short'})} – ${sun.toLocaleDateString('en-IE',{day:'numeric',month:'short'})}</h3>`, `
@@ -1083,6 +1097,23 @@ function notesFields(d, p){
 }
 const readNotes = (m, p) => ({hook:$(`#${p}-hook`,m).value.trim(), locations:$(`#${p}-loc`,m).value.trim(), people:$(`#${p}-people`,m).value.trim(), facts:$(`#${p}-facts`,m).value.trim(), notes:$(`#${p}-notes`,m).value.trim()});
 const hasNotes = x => [x.hook,x.locations,x.people,x.facts,x.notes].some(Boolean);
+const favsOf = x => Array.isArray(x?.favs) ? x.favs : [];
+const isFav = (x, n=S.me?.name) => !!n && favsOf(x).includes(n);
+const favBtn = (x, coll='ideas') => `<button type="button" class="favbtn ${isFav(x)?'on':''}" data-act="toggleFav" data-coll="${coll}" data-id="${x.id}" title="${isFav(x)?'Remove from':'Add to'} my favourites" aria-label="Favourite" aria-pressed="${isFav(x)}">${isFav(x)?'★':'☆'}</button>`;
+const filmChips = x => x.filmed ? `<span class="chip filmed">🎬 Filmed${x.filmedAt?` ${fmtDay(x.filmedAt)}`:''}</span>` : (x.filmDate ? `<span class="chip film">🎥 Film ${fmtDay(x.filmDate)}</span>` : '');
+const FILM_F = [['all','Filming: all'],['tofilm','Not filmed yet'],['planned','Filming day set'],['filmed','Filmed']];
+const filmOk = (i, f) => f==='all' || (f==='filmed' ? !!i.filmed : f==='planned' ? (!i.filmed && !!i.filmDate) : !i.filmed);
+const filmsOn = ds => S.ideas.filter(i => i.filmDate === ds);
+const favSort = (a,b) => (!!a.filmed - !!b.filmed) || ((a.filmDate||'9999').localeCompare(b.filmDate||'9999')) || ((b.createdAt||0)-(a.createdAt||0));
+function favSection(items){
+  const me = S.me?.name;
+  const names = [...new Set([...(S.settings.members||[]).map(m=>m.name).filter(Boolean), ...items.flatMap(favsOf)])].sort((a,b)=>(b===me)-(a===me));
+  const total = items.filter(i=>favsOf(i).length).length;
+  const groups = names.map(n => { const its = items.filter(i=>favsOf(i).includes(n)).sort(favSort);
+    return sec(`fav-${n}`, `<span class="tg-t">★ ${esc(n)}${n===me?' (you)':''}</span><span class="tg-n">${its.length}</span>`,
+      its.length ? `<div class="fav-grid">${its.map(ideaCard).join('')}</div>` : `<div class="tiny" style="padding:4px 2px">Tap ☆ on any idea to add it here.</div>`, {sub:true}); }).join('');
+  return sec('ideas-favs', `<h3>★ Favourites</h3><span class="cnt">${total}</span>`, groups, {cls:'favsec'});
+}
 function allSeries(){ return [...new Set(S.ideas.map(i=>i.series).filter(Boolean))].sort(); }
 const HOOKS = [
  ['Instant hooks', [
@@ -1153,7 +1184,8 @@ function viewIdeas(){
   const pre = S.ideas.filter(i => (showScheduled || i.status!=='scheduled'));
   const base = pre.filter(i => byWho(i, who) && (showScheduled || i.status!=='scheduled') && (!series || i.series===series) &&
     (!ql || [i.title,i.description,i.series,i.research,i.notes,i.facts,i.locations,i.hook].join(' ').toLowerCase().includes(ql)));
-  const list = base.filter(i => rv==='all' || revOf(i)===rv);
+  const ff = S.idf.film || 'all';
+  const list = base.filter(i => (rv==='all' || revOf(i)===rv) && filmOk(i, ff));
   const funnels = [...S.settings.funnels];
   const orphan = list.filter(i=>!S.settings.funnels.some(f=>f.id===i.funnelId));
   if (orphan.length) funnels.push({id:'__none', name:'Unassigned', color:'#7d8a87', types:[]});
@@ -1168,28 +1200,30 @@ function viewIdeas(){
   }).join('');
   return `
   <div class="vhead"><h2>Ideas</h2>${allToggle()}<span class="btn sm upload-btn">Import ideas<input type="file" data-chg="importVideos"></span><button class="btn primary" data-act="newIdea">+ New idea</button></div>
+  ${favSection(pre)}
   ${hookBank()}
   ${whoTabs(pre, who, 'idfWho')}
   ${reviewTabs(base, rv, 'idfReview')}
   <div class="filters">
     <input type="text" id="idf-q" placeholder="Search ideas…" value="${esc(q)}" data-inp="idfQ">
     <select id="idf-series" data-chg="idfSeries"><option value="">All series</option>${allSeries().map(s=>`<option ${s===series?'selected':''}>${esc(s)}</option>`).join('')}</select>
+    <select data-chg="idfFilm" aria-label="Filming">${FILM_F.map(([k,l])=>`<option value="${k}" ${k===ff?'selected':''}>${l}</option>`).join('')}</select>
     <label class="chk"><input type="checkbox" data-chg="idfSched" ${showScheduled?'checked':''}> Show scheduled</label>
   </div>
   <div class="ideas-cols" style="--cols:${Math.min(funnels.length,4)}">${cols}</div>`;
 }
 function ideaCard(i){
   const img = i.imageIds?.[0];
-  return `<div class="icard rvc-${revOf(i)} ${i.status==='scheduled'?'done':''}" data-act="openIdea" data-id="${i.id}">
-    <div class="ib"><div class="it">${esc(i.title)}</div>${i.description?`<div class="id">${esc(i.description)}</div>`:''}
+  return `<div class="icard rvc-${revOf(i)} ${i.status==='scheduled'?'done':''} ${i.filmed?'filmed':''}" data-act="openIdea" data-id="${i.id}">
+    <div class="ib"><div class="it-row"><div class="it">${esc(i.title)}</div>${favBtn(i)}</div>${i.description?`<div class="id">${esc(i.description)}</div>`:''}
     ${revOf(i)==='refine'&&i.refineNote?`<div class="rnote">✎ ${esc(i.refineNote)}</div>`:''}
-    <div class="im">${reviewBadge(i)}${hasNotes(i)?`<span class="chip">📝 Notes</span>`:''}${i.series?`<span class="chip">📺 ${esc(i.series)}</span>`:''}${i.status==='scheduled'?`<span class="chip">📅 Scheduled</span>`:''}${(S.comments.filter(c=>c.parentId===i.id).length)?`<span class="chip">💬 ${S.comments.filter(c=>c.parentId===i.id).length}</span>`:''}<span class="tiny">${esc(i.createdBy||'')}</span>${quickReview(i,'ideas')}</div></div>
+    <div class="im">${reviewBadge(i)}${filmChips(i)}${favsOf(i).length?`<span class="chip favs" title="Favourited by ${esc(favsOf(i).join(', '))}">★ ${esc(favsOf(i).join(', '))}</span>`:''}${hasNotes(i)?`<span class="chip">📝 Notes</span>`:''}${i.series?`<span class="chip">📺 ${esc(i.series)}</span>`:''}${i.status==='scheduled'?`<span class="chip">📅 Scheduled</span>`:''}${(S.comments.filter(c=>c.parentId===i.id).length)?`<span class="chip">💬 ${S.comments.filter(c=>c.parentId===i.id).length}</span>`:''}<span class="tiny">${esc(i.createdBy||'')}</span>${quickReview(i,'ideas')}</div></div>
     ${img?`<img data-img="${thumb(img)}" alt="">`:''}
   </div>`;
 }
 function openIdeaEditor(idea={}){
   const isNew = !idea.id;
-  const d = clean({title:'',description:'',funnelId:S.settings.funnels[0]?.id||'',typeId:'',series:'',research:'',imageIds:[],status:'open',review:'unfiltered',refineNote:'',hook:'',locations:'',people:'',facts:'',notes:'',...idea});
+  const d = clean({title:'',description:'',funnelId:S.settings.funnels[0]?.id||'',typeId:'',series:'',research:'',imageIds:[],status:'open',review:'unfiltered',refineNote:'',hook:'',locations:'',people:'',facts:'',notes:'',favs:[],filmDate:'',filmed:false,filmedAt:'',...idea});
   const fresh = new Set(), toDelete = new Set();
   const linked = d.postId ? S.posts.find(p=>p.id===d.postId) : null;
   const html = `
@@ -1198,6 +1232,11 @@ function openIdeaEditor(idea={}){
     ${linked?`<div class="card pad" style="margin-bottom:12px;background:var(--panel2)">📅 Scheduled as <b>${esc(linked.title)}</b> on ${linked.date?fmtDay(linked.date):'—'} · <a href="#" data-openpost="${linked.id}">Open post</a></div>`:''}
     <div class="field"><label class="f" for="ie-title">Rough title</label><input id="ie-title" value="${esc(d.title)}"></div>
     ${reviewPicker(revOf(d), d.refineNote)}
+    <div class="grid2">
+      <div class="field"><label class="f" for="ie-filmdate">Filming day</label><input type="date" id="ie-filmdate" value="${esc(d.filmDate||'')}"><div class="tiny" style="margin-top:4px">If you decide to film it on a set day. It shows on the calendar.</div></div>
+      <div class="field"><label class="f">Filmed</label><label class="chk-line" style="min-height:40px"><input type="checkbox" id="ie-filmed" ${d.filmed?'checked':''}> Filmed${d.filmed&&d.filmedAt?` (${fmtDay(d.filmedAt)})`:''}</label></div>
+    </div>
+    <div class="field"><label class="chk-line"><input type="checkbox" id="ie-fav" ${isFav(d)?'checked':''}> ★ In my favourites${S.me?.name?` (${esc(S.me.name)})`:''}</label>${favsOf(d).filter(n=>n!==S.me?.name).length?`<div class="tiny" style="margin-top:4px">Also favourited by ${esc(favsOf(d).filter(n=>n!==S.me?.name).join(', '))}</div>`:''}</div>
     <div class="field"><label class="f">Description</label><textarea id="ie-desc" rows="3">${esc(d.description)}</textarea></div>
     <div class="grid2">
       <div class="field"><label class="f">Funnel</label><select id="ie-funnel">${funnelOptions(d.funnelId)}</select></div>
@@ -1237,7 +1276,10 @@ function openIdeaEditor(idea={}){
   $('#ie-funnel',m).onchange = e => { $('#ie-type',m).innerHTML = typeOptions(e.target.value,''); };
   const op = $('[data-openpost]',m); if (op) op.onclick = e => { e.preventDefault(); closeModal(true); openPostEditor(linked); };
   const collect = () => { d.title=$('#ie-title',m).value.trim(); d.description=$('#ie-desc',m).value.trim(); d.funnelId=$('#ie-funnel',m).value; d.typeId=$('#ie-type',m).value; d.series=$('#ie-series',m).value.trim(); d.research=$('#ie-research',m).value.trim();
-    d.review = readReview(m); d.refineNote = d.review==='refine' ? $('#rv-note',m).value.trim() : (d.refineNote||''); Object.assign(d, readNotes(m,'ie')); };
+    d.review = readReview(m); d.refineNote = d.review==='refine' ? $('#rv-note',m).value.trim() : (d.refineNote||''); Object.assign(d, readNotes(m,'ie'));
+    d.filmDate = $('#ie-filmdate',m).value || ''; const wasFilmed = !!d.filmed; d.filmed = $('#ie-filmed',m).checked;
+    if (d.filmed && !wasFilmed) d.filmedAt = (d.filmDate && d.filmDate <= todayISO()) ? d.filmDate : todayISO(); if (!d.filmed) d.filmedAt = '';
+    const me = S.me?.name; if (me) { const f = new Set(favsOf(d)); if ($('#ie-fav',m).checked) f.add(me); else f.delete(me); d.favs = [...f]; } };
   const save = async () => {
     collect(); if (!d.title) { $('#ie-err',m).textContent = 'Add a rough title.'; return false; }
     const {id, ...data} = d;
@@ -2007,6 +2049,8 @@ document.addEventListener('click', async e => {
     case 'ytStarters': { const now = Date.now(); for (const [i,[title,format,angle]] of YT_STARTERS.entries()) await store.add('youtube', {title, format, angle, stage:'idea', imageIds:[], createdBy:'Starter idea', createdAt: now - i}); toast('Added 6 starter ideas'); break; }
     case 'newIdea': openIdeaEditor({funnelId: t.dataset.f || S.settings.funnels[0]?.id}); break;
     case 'openIdea': { const i = S.ideas.find(x=>x.id===id); if (i) openIdeaEditor(i); break; }
+    case 'toggleFav': { e.stopPropagation(); const coll = t.dataset.coll || 'ideas'; const x = S[coll].find(z=>z.id===id); const me = S.me?.name; if (!x || !me) break;
+      const f = new Set(favsOf(x)); const on = !f.has(me); if (on) f.add(me); else f.delete(me); await store.update(coll, id, {favs:[...f]}); toast(on ? 'Added to your favourites' : 'Removed from your favourites'); break; }
     // review
     case 'rvSort': { const k = t.dataset.k; if (S.rv.sort===k) S.rv.dir *= -1; else { S.rv.sort = k; S.rv.dir = ['date','title','platform'].includes(k) ? 1 : -1; } renderView(); break; }
     // weekly
@@ -2167,6 +2211,7 @@ document.addEventListener('change', async e => {
     case 'demoUser': S.me = {name:t.value, email:''}; try{ localStorage.setItem('verus_demo_user', t.value); }catch{} renderShell(); renderView(); refreshThreads(); break;
     case 'idfSeries': S.idf.series = t.value; renderView(); break;
     case 'idfSched': S.idf.showScheduled = t.checked; renderView(); break;
+    case 'idfFilm': S.idf.film = t.value; renderView(); break;
     case 'lfFunnel': S.lf.funnel = t.value; renderView(); break;
     case 'lfRecycle': S.lf.recycle = t.value; renderView(); break;
     case 'lfSort': S.lf.sort = t.value; renderView(); break;
@@ -2228,6 +2273,35 @@ async function seedEverything(){
   seeding = false;
 }
 
+// ---------- one-time update 2026-11-09: approved ideas -> Milo's favourites, add blind-format ideas ----------
+const MIG_2026_11_09 = 'mig-2026-11-09-favs-blind';
+const NEW_IDEAS_2026_11_09 = [{"title": "Blind 1–10: Biggest red flags in an athlete's diet", "type": "t_rate", "rx": "rating|tier", "series": "Blind games", "description": "Red flags come up one at a time and Daniel has to lock each into a slot from 1 to 10 without knowing what's next. Once placed, it can't move. His expertise, not a food opinion, so people save it and argue about it.", "hook": "I have to rank the 10 biggest red flags in an athlete's diet… and I can't see what's coming next.", "people": "Daniel. Someone off camera (Milo) hands him cards face down. 10 cue cards.", "facts": "Check every claim and number with Daniel before it goes on screen.", "notes": "Cards (shuffle, Daniel never sees the list): skipping breakfast on match day · fear of carbs · 5 coffees a day · copying a pro's meal plan · energy drink before kick-off · not eating until after training · 'clean eating' everything · weighing yourself every morning · no water until you're thirsty · cutting weight the week of a final.\n\nEdit: empty 1–10 list on screen from frame 1, each slot fills with a click sound, punch-in on his reactions when he's stuck with a bad slot. Hide the hardest card late.\nEnd: 'Where would you have put ___? I think I got one wrong.' Each red flag can become its own follow-up reel."}, {"title": "Start / Bench / Cut", "type": "t_rate", "rx": "rating|tier", "series": "Blind games", "description": "Three items are revealed together. Daniel has to start one, bench one and cut one. No ties, no explaining his way out. Quick, repeatable, easy to make a series.", "hook": "Start, bench, cut. Breakfast edition. Go.", "people": "Daniel, 3 items or picture cards per round, someone off camera revealing them.", "facts": "Check claims with Daniel before they go on screen.", "notes": "Rounds:\n• Breakfasts: porridge / eggs on toast / protein bar\n• Supplements: creatine / protein powder / fish oil\n• Half-time snacks: jelly babies / banana / flapjack\n• Recovery: ice bath / 8 hours' sleep / foam roller\n• Irish takeaways: chicken fillet roll / chipper / Chinese\n• Drinks: coffee / Lucozade / chocolate milk\n\n2–3 rounds per reel. On-screen START / BENCH / CUT labels slam in. End: 'Comment the 3 I should do next.'"}, {"title": "Blind 1–10: Most overhyped supplements", "type": "t_rate", "rx": "rating|tier", "series": "Blind games", "description": "Same blind 1–10 rules. Supplements come out one at a time and Daniel ranks them from most to least overhyped, locked in as he goes.", "hook": "Ranking the 10 most overhyped supplements… blind.", "people": "Daniel, 10 supplement tubs or picture cards, someone revealing them.", "facts": "Supplement claims must come from Daniel and be checked before posting. Avoid naming brands unless agreed.", "notes": "Ideas for the bag: greens powder, BCAAs, fat burners, collagen, ashwagandha, pre-workout, electrolyte tabs, creatine, protein powder, vitamin D (some should be 'not overhyped' to create arguments)."}, {"title": "Blind 1–10: Worst things to eat the night before a match", "type": "t_rate", "rx": "rating|tier", "series": "Blind games", "description": "Blind ranking of night-before-match meals, from worst to least bad. Relatable for every club player.", "hook": "The worst things you can eat the night before a match. Ranked blind.", "people": "Daniel, 10 picture cards.", "facts": "Check with Daniel.", "notes": "Cards: curry, chipper, a big salad, spicy wings, 'nothing at all', pints, a massive steak, pizza, a new food you've never tried, beans and lentils."}, {"title": "Blind 1–10: Pre-race mistakes marathon runners make", "type": "t_rate", "rx": "rating|tier", "series": "Blind games", "description": "Blind ranking for runners. Ties into the Marathon Nutrition Playbook as a soft CTA.", "hook": "Ranking the 10 biggest marathon mistakes… without knowing what's next.", "people": "Daniel, 10 cards.", "facts": "Check with Daniel. CTA to the Marathon Playbook only if Gemma/Daniel agree.", "notes": "Cards: new shoes on race day, trying a gel for the first time, no carb loading, over-carb loading, skipping breakfast, too much fibre, no fluids early, starting too fast, a big pasta meal at 10pm, no plan for the last 10k."}, {"title": "Overrated / Underrated / Properly rated", "type": "t_take", "rx": "hot take|rating", "series": "Blind games", "description": "One thing at a time and Daniel gives an instant verdict. Quick-fire, with plenty of hot takes for the comments.", "hook": "Overrated, underrated or properly rated? First answer only.", "people": "Daniel, someone reading items out off camera.", "facts": "Check with Daniel.", "notes": "Items: sleep, protein shakes, carb loading, ice baths, breakfast, creatine, gut health, fasted training, cheat meals, sports drinks."}, {"title": "Higher or Lower: protein edition", "type": "t_trend", "rx": "trend|challenge|quiz", "series": "Blind games", "description": "'Does this have more or less protein than the last one?' Daniel calls it before the label is shown, with a running score on screen. Viewers play along.", "hook": "Higher or lower: protein edition. If I get 5 in a row I'm buying the coffees.", "people": "Daniel, 8–10 foods with labels, someone off camera revealing them.", "facts": "Every protein number has to be read off the real label and checked before it goes on screen.", "notes": "Mix easy and surprising foods (bagel, Greek yoghurt, chickpeas, a protein bar, eggs, cottage cheese, milk, ham). Score counter in the corner, big HIGHER / LOWER buttons."}, {"title": "Before, During, After or Never", "type": "t_rate", "rx": "rating|tier", "series": "Blind games", "description": "Foods come out one at a time and Daniel sorts them into match-day timing: before, during, after, or never.", "hook": "Before, during, after or never? Match-day edition.", "people": "Daniel, 4 labelled zones on the table, the foods themselves.", "facts": "Check with Daniel.", "notes": "Foods: banana, pasta, chocolate milk, Haribo, steak, porridge, a pint, coffee, crisps, rice cakes. Top-down shot of the table zones works well as a second angle."}, {"title": "Elite or Amateur?", "type": "t_rate", "rx": "rating|tier|elite", "series": "Blind games", "description": "A habit is revealed and Daniel calls it: something elite athletes do, or something club players get wrong. Uses his GAA and rugby credibility.", "hook": "Elite habit or amateur mistake? You've got 3 seconds.", "people": "Daniel, habit cards.", "facts": "No names of real athletes or teams unless Daniel is happy to say them.", "notes": "Habits: weighing food, a nap before games, a 'cheat day', eating the same breakfast every day, tracking sleep, drinking only water, fuelling during training, skipping dinner after a late game."}, {"title": "Blind Draft: Daniel vs Gemma", "type": "t_trend", "rx": "trend|collab", "series": "Blind games", "description": "Daniel and Gemma take turns picking from a pool of foods revealed one at a time, each building a match-day plate. The audience votes for the winner in the comments.", "hook": "Gemma and I are drafting the perfect match-day plate. Blind.", "people": "Daniel and Gemma, one plate each, food cards revealed one by one.", "facts": "Check with Daniel and Gemma.", "notes": "Post as a Collab with @verusperform. Comment CTA: 'Whose plate wins? D or G.' Good for the VERUS account."}, {"title": "Keep or Kick: the supermarket trolley", "type": "t_rate", "rx": "rating|tier", "series": "Blind games", "description": "Someone fills a trolley without Daniel seeing it. He pulls items out one by one and keeps them or kicks them out. Fits his supermarket content, which already performs well.", "hook": "Someone filled this trolley. I have to keep it or kick it.", "people": "Daniel, a full trolley, a supermarket that allows filming (or his kitchen with shopping bags).", "locations": "Supermarket (ask permission first) or Daniel's kitchen.", "facts": "Check with Daniel. Avoid slagging brands by name unless agreed.", "notes": "Fill it with a mix: good swaps, 'health halo' products, a treat he'd actually keep. End on the item he'd never kick."}];
+let migrating = false;
+async function maybeMigrate(){
+  if (migrating || seeding || !S.settings || !S.loaded.has('ideas')) return;
+  if ((S.settings.migrations||[]).includes(MIG_2026_11_09)) return;
+  if (store.mode === 'firebase' && !AUTH?.user) return;
+  migrating = true;
+  try {
+    await saveSettings(s => { s.migrations = [...(s.migrations||[]), MIG_2026_11_09]; });
+    let moved = 0;
+    for (const i of S.ideas.filter(i => revOf(i)==='approved' && !favsOf(i).includes('Milo'))) { await store.update('ideas', i.id, {favs:[...favsOf(i), 'Milo']}); moved++; }
+    const fun = S.settings.funnels.find(f=>f.id==='f_top') || S.settings.funnels[0];
+    const typeFor = (id, rx) => (fun?.types.find(t=>t.id===id) || fun?.types.find(t=>rx.test(t.name)) || {id:''}).id;
+    const have = new Set(S.ideas.map(i => (i.title||'').trim().toLowerCase()));
+    const now = Date.now(); let added = 0;
+    for (const [ix, x] of NEW_IDEAS_2026_11_09.entries()) {
+      if (have.has(x.title.toLowerCase())) continue;
+      const {type, rx, ...rest} = x;
+      await store.add('ideas', {description:'', funnelId: fun?.id||'', typeId: typeFor(type, new RegExp(rx,'i')), series:'', research:'', imageIds:[], status:'open', review:'unfiltered', refineNote:'',
+        hook:'', locations:'', people:'', facts:'', notes:'', favs:[], filmDate:'', filmed:false, filmedAt:'', ...rest, createdBy:'Milo', createdAt: now - ix*1000});
+      added++;
+    }
+    if (moved || added) toast(`Hub updated: ${added} new ideas added, ${moved} approved ideas put in Milo's favourites`);
+  } catch(e) { console.error(e); toast('Update could not finish: '+e.message, 'err'); }
+  finally { migrating = false; }
+}
+
 // ---------- boot ----------
 let AUTH = null;
 function resolveMe(){
@@ -2239,11 +2313,11 @@ function resolveMe(){
 function startSync(){
   store.subscribe('settings', async (data, meta) => {
     if (!data) { if (!meta?.fromCache) await seedEverything(); return; }
-    S.settings = data; S.loaded.add('settings'); resolveMe();
+    S.settings = data; S.loaded.add('settings'); resolveMe(); setTimeout(maybeMigrate, 0);
     if (!S.me) { let n = null; try { n = localStorage.getItem('verus_demo_user'); } catch {} S.me = {name: data.members.find(x=>x.name===n)?.name || data.members[0]?.name || 'Milo', email:''}; }
     requestRender();
   });
-  COLLS.forEach(c => store.subscribe(c, list => { S[c] = list; S.loaded.add(c); if (S.settings) requestRender(); }));
+  COLLS.forEach(c => store.subscribe(c, list => { S[c] = list; S.loaded.add(c); if (S.settings) requestRender(); if (c==='ideas') setTimeout(maybeMigrate, 0); }));
 }
 function showDenied(){
   $('#app').innerHTML = `<div class="card login"><h1>VERUS</h1><p>This account (${esc(AUTH?.user?.email||'')}) isn't on the team list in the Firestore security rules.</p><p class="tiny">Ask Milo to add your email to <code>firestore.rules</code> and publish them again.</p><button class="btn" id="so">Sign out</button></div>`;
