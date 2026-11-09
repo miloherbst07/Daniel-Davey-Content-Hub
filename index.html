@@ -452,6 +452,25 @@ details.wwcard.ww-not{box-shadow:inset 3px 0 0 var(--line2)} details.wwcard.ww-c
 .favbtn:hover,.favbtn.on{color:#f0b85a}
 .chip.film{border-color:rgba(240,184,90,.45);color:var(--warn)} .chip.filmed{border-color:rgba(95,209,167,.45);color:var(--mint)} .chip.favs{color:#f0b85a;border-color:rgba(240,184,90,.3)}
 .icard.filmed{opacity:.72}
+/* idea dropdowns (2026-11-09) */
+details.idrop{margin-bottom:8px}
+details.idrop>summary{list-style:none;margin:0;-webkit-tap-highlight-color:transparent}
+details.idrop>summary::-webkit-details-marker{display:none}
+.icard .ichev{flex:none;align-self:center;width:22px;height:22px;margin-right:8px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center}
+.icard .ichev::before{content:"";width:6px;height:6px;border-right:2px solid var(--mint);border-bottom:2px solid var(--mint);transform:translate(-1px,0) rotate(-45deg);transition:transform .2s}
+details.idrop[open]>summary .ichev::before{transform:translateY(-2px) rotate(45deg)}
+details.idrop[open]>summary.icard{border-color:rgba(95,209,167,.4);border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:0}
+details.idrop[open]>summary .id{-webkit-line-clamp:unset;display:block}
+.idrop-b{border:1px solid rgba(95,209,167,.4);border-top:0;border-radius:0 0 14px 14px;background:var(--panel2);padding:12px 13px;display:flex;flex-direction:column;gap:10px;cursor:default}
+.idrop-b .ib-l{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--ink3);margin-bottom:2px}
+.idrop-b .ib-t{white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.45}
+.film-ctl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;padding:10px;border:1px dashed rgba(240,184,90,.4);border-radius:12px;background:rgba(240,184,90,.04)}
+.film-ctl input[type=date]{min-height:36px;padding:6px 10px}
+.film-ctl .chk-line{font-size:13px;min-height:36px}
+.idrop-act{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.fp-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.fp-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px dashed rgba(240,184,90,.45);border-radius:12px;background:var(--field)}
+.fp-item b{flex:1;min-width:0}
 .fav-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}.fav-grid .icard{margin-bottom:0}
 details.favsec{box-shadow:inset 0 3px 0 #f0b85a}
 .filmdot{position:absolute;top:5px;right:6px;z-index:3;font-size:11px;font-weight:800;line-height:18px;padding:0 5px;border-radius:7px;background:rgba(240,184,90,.9);color:#241600}
@@ -875,7 +894,7 @@ function calSidebar(){
   for (let i=0;i<7;i++){
     const ds = iso(addDays(mon,i)), posts = postsOn(ds), films = filmsOn(ds);
     body += `<div class="side-day ${ds===S.cal.sel?'hl':''}">
-      <div class="dh"><span>${fmtDay(ds)}</span><button class="icon-btn" data-act="newPost" data-date="${ds}" title="Add post on ${fmtDay(ds)}">＋</button></div>
+      <div class="dh"><span>${fmtDay(ds)}</span><span><button class="icon-btn" data-act="planFilm" data-date="${ds}" title="Film an idea on ${fmtDay(ds)}">🎥＋</button><button class="icon-btn" data-act="newPost" data-date="${ds}" title="Add post on ${fmtDay(ds)}">＋</button></span></div>
       ${posts.map(p=>{ const f = funnelOf(p.funnelId); return `<div class="sitem" data-act="openPost" data-id="${p.id}">
         <div class="sw" style="background:${esc(f.color)}"></div>
         <div style="min-width:0"><div class="st">${p.repostOf?'↻ ':''}${esc(p.title)}</div>
@@ -1212,14 +1231,48 @@ function viewIdeas(){
   </div>
   <div class="ideas-cols" style="--cols:${Math.min(funnels.length,4)}">${cols}</div>`;
 }
+const OPEN_IDEAS = new Set();
+document.addEventListener('toggle', e => { const d = e.target; if (d.matches && d.matches('details.idrop')) { if (d.open) OPEN_IDEAS.add(d.dataset.idea); else OPEN_IDEAS.delete(d.dataset.idea); } }, true);
+const ibBlock = (label, txt) => txt ? `<div><div class="ib-l">${label}</div><div class="ib-t">${esc(txt)}</div></div>` : '';
+function ideaBody(i){
+  return `<div class="idrop-b">
+    <div class="film-ctl">
+      <div><label class="f" for="fd-${i.id}">🎥 Filming day</label><input type="date" id="fd-${i.id}" value="${esc(i.filmDate||'')}" data-chg="ideaFilmDate" data-id="${i.id}"></div>
+      <label class="chk-line"><input type="checkbox" data-chg="ideaFilmed" data-id="${i.id}" ${i.filmed?'checked':''}> 🎬 Filmed</label>
+    </div>
+    ${ibBlock('Hook', i.hook)}${ibBlock('How to film it / notes', i.notes)}${ibBlock('People, props & kit', i.people)}${ibBlock('Locations', i.locations)}${ibBlock('Facts & numbers', i.facts)}${ibBlock('Research', i.research)}
+    <div class="idrop-act"><button type="button" class="btn sm" data-act="openIdea" data-id="${i.id}">✎ Edit idea</button><button type="button" class="btn sm ghost" data-act="toggleFav" data-coll="ideas" data-id="${i.id}">${isFav(i)?'★ In my favourites':'☆ Add to my favourites'}</button></div>
+  </div>`;
+}
 function ideaCard(i){
   const img = i.imageIds?.[0];
-  return `<div class="icard rvc-${revOf(i)} ${i.status==='scheduled'?'done':''} ${i.filmed?'filmed':''}" data-act="openIdea" data-id="${i.id}">
+  return `<details class="idrop" data-idea="${i.id}" ${OPEN_IDEAS.has(i.id)?'open':''}><summary class="icard rvc-${revOf(i)} ${i.status==='scheduled'?'done':''} ${i.filmed?'filmed':''}">
     <div class="ib"><div class="it-row"><div class="it">${esc(i.title)}</div>${favBtn(i)}</div>${i.description?`<div class="id">${esc(i.description)}</div>`:''}
     ${revOf(i)==='refine'&&i.refineNote?`<div class="rnote">✎ ${esc(i.refineNote)}</div>`:''}
     <div class="im">${reviewBadge(i)}${filmChips(i)}${favsOf(i).length?`<span class="chip favs" title="Favourited by ${esc(favsOf(i).join(', '))}">★ ${esc(favsOf(i).join(', '))}</span>`:''}${hasNotes(i)?`<span class="chip">📝 Notes</span>`:''}${i.series?`<span class="chip">📺 ${esc(i.series)}</span>`:''}${i.status==='scheduled'?`<span class="chip">📅 Scheduled</span>`:''}${(S.comments.filter(c=>c.parentId===i.id).length)?`<span class="chip">💬 ${S.comments.filter(c=>c.parentId===i.id).length}</span>`:''}<span class="tiny">${esc(i.createdBy||'')}</span>${quickReview(i,'ideas')}</div></div>
-    ${img?`<img data-img="${thumb(img)}" alt="">`:''}
-  </div>`;
+    ${img?`<img data-img="${thumb(img)}" alt="">`:''}<span class="ichev" aria-hidden="true"></span>
+  </summary>${ideaBody(i)}</details>`;
+}
+function openFilmPicker(ds){
+  const on = filmsOn(ds);
+  const avail = S.ideas.filter(i => !i.filmed && i.filmDate !== ds && revOf(i) !== 'denied');
+  const opt = i => `<option value="${i.id}">${esc(i.title)}${i.filmDate?` (now ${fmtDay(i.filmDate)})`:''}</option>`;
+  const favs = avail.filter(i => isFav(i)).sort(favSort);
+  const rest = avail.filter(i => !isFav(i));
+  const groups = (favs.length ? `<optgroup label="★ My favourites">${favs.map(opt).join('')}</optgroup>` : '') +
+    [...S.settings.funnels, {id:'__none', name:'Other'}].map(f => { const its = rest.filter(i => f.id==='__none' ? !S.settings.funnels.some(x=>x.id===i.funnelId) : i.funnelId===f.id).sort((a,b)=>a.title.localeCompare(b.title));
+      return its.length ? `<optgroup label="${esc(f.name)}">${its.map(opt).join('')}</optgroup>` : ''; }).join('');
+  const m = openModal(`<div class="mh"><h3>🎥 Filming day · ${fmtDay(ds)}</h3><button class="icon-btn" data-close>✕</button></div>
+    <div class="mb">
+      <div class="fp-list">${on.map(i=>`<div class="fp-item"><b>${esc(i.title)}</b>${i.filmed?'<span class="chip filmed">🎬 Filmed</span>':''}<button class="icon-btn" data-fpopen="${i.id}" title="Open idea">✎</button><button class="icon-btn" data-fprm="${i.id}" title="Take off this day">✕</button></div>`).join('') || '<div class="tiny">No ideas planned for this day yet.</div>'}</div>
+      <div class="field"><label class="f" for="fp-sel">Add an idea to film on this day</label><select id="fp-sel"><option value="">Choose an idea…</option>${groups}</select></div>
+      <p class="tiny" style="margin:0">Ideas already planned for another day move to this one. Filmed and denied ideas aren't listed.</p>
+    </div>
+    <div class="mf"><div class="sp"></div><button class="btn" data-close>Done</button><button class="btn primary" id="fp-add">Add to this day</button></div>`, {small:true});
+  $('#fp-add',m).onclick = async () => { const id = $('#fp-sel',m).value; if (!id) { toast('Choose an idea first','err'); return; }
+    await store.update('ideas', id, {filmDate: ds}); toast(`Added to ${fmtDay(ds)}`); openFilmPicker(ds); };
+  $$('[data-fprm]',m).forEach(b => b.onclick = async () => { await store.update('ideas', b.dataset.fprm, {filmDate:''}); toast('Taken off this day'); openFilmPicker(ds); });
+  $$('[data-fpopen]',m).forEach(b => b.onclick = () => { const i = S.ideas.find(x=>x.id===b.dataset.fpopen); if (i) openIdeaEditor(i); });
 }
 function openIdeaEditor(idea={}){
   const isNew = !idea.id;
@@ -2049,6 +2102,7 @@ document.addEventListener('click', async e => {
     case 'ytStarters': { const now = Date.now(); for (const [i,[title,format,angle]] of YT_STARTERS.entries()) await store.add('youtube', {title, format, angle, stage:'idea', imageIds:[], createdBy:'Starter idea', createdAt: now - i}); toast('Added 6 starter ideas'); break; }
     case 'newIdea': openIdeaEditor({funnelId: t.dataset.f || S.settings.funnels[0]?.id}); break;
     case 'openIdea': { const i = S.ideas.find(x=>x.id===id); if (i) openIdeaEditor(i); break; }
+    case 'planFilm': openFilmPicker(t.dataset.date); break;
     case 'toggleFav': { e.stopPropagation(); const coll = t.dataset.coll || 'ideas'; const x = S[coll].find(z=>z.id===id); const me = S.me?.name; if (!x || !me) break;
       const f = new Set(favsOf(x)); const on = !f.has(me); if (on) f.add(me); else f.delete(me); await store.update(coll, id, {favs:[...f]}); toast(on ? 'Added to your favourites' : 'Removed from your favourites'); break; }
     // review
@@ -2212,6 +2266,9 @@ document.addEventListener('change', async e => {
     case 'idfSeries': S.idf.series = t.value; renderView(); break;
     case 'idfSched': S.idf.showScheduled = t.checked; renderView(); break;
     case 'idfFilm': S.idf.film = t.value; renderView(); break;
+    case 'ideaFilmDate': await store.update('ideas', t.dataset.id, {filmDate: t.value || ''}); toast(t.value ? `Filming day: ${fmtDay(t.value)}` : 'Filming day cleared'); break;
+    case 'ideaFilmed': { const x = S.ideas.find(z=>z.id===t.dataset.id); if (!x) break; const on = t.checked;
+      await store.update('ideas', x.id, {filmed:on, filmedAt: on ? ((x.filmDate && x.filmDate <= todayISO()) ? x.filmDate : todayISO()) : ''}); toast(on ? 'Marked as filmed' : 'Marked as not filmed'); break; }
     case 'lfFunnel': S.lf.funnel = t.value; renderView(); break;
     case 'lfRecycle': S.lf.recycle = t.value; renderView(); break;
     case 'lfSort': S.lf.sort = t.value; renderView(); break;
