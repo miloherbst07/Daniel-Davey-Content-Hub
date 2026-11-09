@@ -468,6 +468,13 @@ details.idrop[open]>summary .id{-webkit-line-clamp:unset;display:block}
 .film-ctl input[type=date]{min-height:36px;padding:6px 10px}
 .film-ctl .chk-line{font-size:13px;min-height:36px}
 .idrop-act{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.fm-plan{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.fm-plan input[type=date]{width:auto;min-width:170px}
+.fm-day-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.fm-day-h .when{font-size:12px;color:var(--ink3);font-weight:600}
+.fm-when{font-size:12px;color:var(--ink3);font-weight:600;white-space:nowrap}
+@media (max-width:560px){.fm-when,.fm-addl{display:none}details.fmday>summary{gap:6px;padding:12px 10px 12px 12px}details.fmday>summary .btn{padding:5px 8px}}
+.chip.warn{border-color:rgba(240,184,90,.5);color:var(--warn)}
+.fm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;align-items:start}.fm-grid details.idrop{margin-bottom:0}
 .fp-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
 .fp-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px dashed rgba(240,184,90,.45);border-radius:12px;background:var(--field)}
 .fp-item b{flex:1;min-width:0}
@@ -724,7 +731,7 @@ class FirebaseStore {
 let store = null;
 const S = {
   settings:null, followers:[], weeklyword:[], youtube:[], wwf:'all', wwq:'', ytq:'', posts:[], ideas:[], plans:[], reflections:[], comments:[], weekly:[],
-  me:null, view: (h => ({review:'stats'})[h] || (h && h in {calendar:1,ideas:1,youtube:1,word:1,stats:1,library:1,weekly:1,plan:1,reflections:1,settings:1} ? h : 'calendar'))(location.hash.slice(1)), loaded:new Set(),
+  me:null, view: (h => ({review:'stats'})[h] || (h && h in {calendar:1,ideas:1,filming:1,youtube:1,word:1,stats:1,library:1,weekly:1,plan:1,reflections:1,settings:1} ? h : 'calendar'))(location.hash.slice(1)), loaded:new Set(),
   cal:{ month: new Date(new Date().getFullYear(), new Date().getMonth(), 1), sel: todayISO() },
   idf:{ q:'', series:'', showScheduled:false, review:'all', who:(()=>{ try{ return localStorage.getItem('verus_idwho')||'all'; }catch{ return 'all'; } })() },
   ytwho:(()=>{ try{ return localStorage.getItem('verus_ytwho')||'all'; }catch{ return 'all'; } })(),
@@ -783,7 +790,7 @@ document.addEventListener('focusout', e => { if (deferred && $('#view')?.contain
 
 // ---------- shell ----------
 // Main hub tabs, plus three pages that open on their own (Library, Review, Settings)
-const HUB = [['calendar','Calendar'],['ideas','Ideas'],['youtube','YouTube'],['word','Weekly Word'],['stats','Stats']];
+const HUB = [['calendar','Calendar'],['ideas','Ideas'],['filming','Filming days'],['youtube','YouTube'],['word','Weekly Word'],['stats','Stats']];
 const SITES = {
   library: {title:'Library', views:[['library','Library']]},
   review:  {title:'Review', views:[['weekly','Weekly'],['plan','Plan'],['reflections','Reflections']]},
@@ -1252,6 +1259,27 @@ function ideaCard(i){
     <div class="im">${reviewBadge(i)}${filmChips(i)}${favsOf(i).length?`<span class="chip favs" title="Favourited by ${esc(favsOf(i).join(', '))}">★ ${esc(favsOf(i).join(', '))}</span>`:''}${hasNotes(i)?`<span class="chip">📝 Notes</span>`:''}${i.series?`<span class="chip">📺 ${esc(i.series)}</span>`:''}${i.status==='scheduled'?`<span class="chip">📅 Scheduled</span>`:''}${(S.comments.filter(c=>c.parentId===i.id).length)?`<span class="chip">💬 ${S.comments.filter(c=>c.parentId===i.id).length}</span>`:''}<span class="tiny">${esc(i.createdBy||'')}</span>${quickReview(i,'ideas')}</div></div>
     ${img?`<img data-img="${thumb(img)}" alt="">`:''}<span class="ichev" aria-hidden="true"></span>
   </summary>${ideaBody(i)}</details>`;
+}
+// FILMING DAYS (own tab)
+function relDay(ds){ const n = Math.round((parseISO(ds) - parseISO(todayISO()))/86400000); return n===0?'Today':n===1?'Tomorrow':n===-1?'Yesterday':n>1?`in ${n} days`:`${-n} days ago`; }
+function filmDaySec(ds, its, def=true){
+  const done = its.filter(i=>i.filmed).length, past = ds < todayISO(), left = its.length - done;
+  const head = `<h3 style="white-space:nowrap;flex:none">${fmtDay(ds)}</h3><span class="fm-when">${relDay(ds)}</span><span class="cnt">${done}/${its.length} filmed</span>${past&&left?`<span class="chip warn">${left} not marked filmed</span>`:''}<button class="btn sm" data-act="planFilm" data-date="${ds}" title="Add an idea to this day">🎥＋<span class="fm-addl"> Add idea</span></button>`;
+  return sec(`film-${ds}`, head, `<div class="fm-grid">${its.sort((a,b)=>(!!a.filmed-!!b.filmed)||a.title.localeCompare(b.title)).map(ideaCard).join('')}</div>`, {def, cls:'fmday'});
+}
+function viewFilming(){
+  const t = todayISO();
+  const dated = S.ideas.filter(i=>i.filmDate);
+  const days = [...new Set(dated.map(i=>i.filmDate))];
+  const up = days.filter(d=>d>=t).sort(), past = days.filter(d=>d<t).sort().reverse();
+  const ready = S.ideas.filter(i=>!i.filmDate && !i.filmed && favsOf(i).length && revOf(i)!=='denied').sort(favSort);
+  const upBody = up.length ? up.map(d=>filmDaySec(d, dated.filter(i=>i.filmDate===d))).join('') : `<div class="empty">No filming days planned yet. Pick a date above, or set a filming day inside any idea.</div>`;
+  return `
+  <div class="vhead"><h2>Filming days</h2>${allToggle()}
+    <div class="fm-plan"><input type="date" id="fm-date" value="${t}" aria-label="Filming date"><button class="btn primary" data-act="fmPlan">🎥 Plan a filming day</button></div></div>
+  ${sec('film-up', `<h3>Coming up</h3><span class="cnt">${up.length} day${up.length===1?'':'s'} · ${dated.filter(i=>i.filmDate>=t).length} ideas</span>`, upBody)}
+  ${sec('film-ready', `<h3>★ Favourites without a filming day</h3><span class="cnt">${ready.length}</span>`, ready.length ? `<p class="tiny" style="margin:0 0 10px">Open an idea and pick a filming day, or use 🎥＋ on a day above.</p><div class="fm-grid">${ready.map(ideaCard).join('')}</div>` : `<div class="empty">Every favourite has a filming day (or is filmed).</div>`)}
+  ${sec('film-past', `<h3>Past filming days</h3><span class="cnt">${past.length}</span>`, past.length ? past.map(d=>filmDaySec(d, dated.filter(i=>i.filmDate===d), false)).join('') : `<div class="empty">Nothing yet.</div>`, {def:false})}`;
 }
 function openFilmPicker(ds){
   const on = filmsOn(ds);
@@ -1979,7 +2007,7 @@ function viewSettings(){
   </div>`;
 }
 
-const VIEWS = { calendar:viewCalendar, ideas:viewIdeas, youtube:viewYouTube, word:viewWord, library:viewLibrary, stats:viewReview, weekly:viewWeekly, plan:viewPlan, reflections:viewReflections, settings:viewSettings };
+const VIEWS = { calendar:viewCalendar, ideas:viewIdeas, filming:viewFilming, youtube:viewYouTube, word:viewWord, library:viewLibrary, stats:viewReview, weekly:viewWeekly, plan:viewPlan, reflections:viewReflections, settings:viewSettings };
 
 // ---------- settings helpers ----------
 async function saveSettings(mut){ const s = clean(S.settings); mut(s); S.settings = s; requestRender(); try { await store.setSettings(s); } catch(e){ toast('Could not save settings: '+e.message,'err'); } }
@@ -2103,6 +2131,7 @@ document.addEventListener('click', async e => {
     case 'newIdea': openIdeaEditor({funnelId: t.dataset.f || S.settings.funnels[0]?.id}); break;
     case 'openIdea': { const i = S.ideas.find(x=>x.id===id); if (i) openIdeaEditor(i); break; }
     case 'planFilm': openFilmPicker(t.dataset.date); break;
+    case 'fmPlan': { const v = $('#fm-date')?.value; if (!v) { toast('Pick a date first','err'); break; } openFilmPicker(v); break; }
     case 'toggleFav': { e.stopPropagation(); const coll = t.dataset.coll || 'ideas'; const x = S[coll].find(z=>z.id===id); const me = S.me?.name; if (!x || !me) break;
       const f = new Set(favsOf(x)); const on = !f.has(me); if (on) f.add(me); else f.delete(me); await store.update(coll, id, {favs:[...f]}); toast(on ? 'Added to your favourites' : 'Removed from your favourites'); break; }
     // review
