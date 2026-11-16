@@ -2400,8 +2400,8 @@ let igSyncing = false;
 async function applyIgSync(){
   const ig = window.IG_SYNC;
   if (!ig || igSyncing || seeding || !S.settings || !S.loaded.has('posts')) return;
-  const doSync = S.settings.igSync !== ig.version, doAdd = !!ig.add && S.settings.igAdd !== ig.addVersion;
-  if (!doSync && !doAdd) return;
+  const doSync = S.settings.igSync !== ig.version, doAdd = !!ig.add && S.settings.igAdd !== ig.addVersion, doCal = !!ig.calVersion && S.settings.igCal !== ig.calVersion;
+  if (!doSync && !doAdd && !doCal) return;
   igSyncing = true;
   if (doSync) try {
     const norm = x => String(x||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
@@ -2440,13 +2440,24 @@ async function applyIgSync(){
       let thumbId = ''; if (v.img) try { thumbId = await uploadImage(dataURLtoBlob(v.img)); } catch(e){ console.warn('thumb failed', e); }
       const first = v.p[0].d, last = v.p[v.p.length-1].d, sum = v.p.reduce((a,x)=>a+(x.v||0),0);
       await store.add('posts', { title: v.t, date: first, lastPosted: v.p.length>1 ? last : '', link: v.p[v.p.length-1].u, funnelId: v.f, typeId: v.ty,
-        status:'Posted', source:'manual', format: v.fmt || 'reel', platforms:['ig'], notes: v.n, screenshotId:'', thumbId, stats:{ig: v.st || {views:sum}}, recycle:'',
+        status:'Posted', source: v.cal ? 'calendar' : 'manual', format: v.fmt || 'reel', platforms:['ig'], notes: v.n, screenshotId:'', thumbId, stats:{ig: v.st || {views:sum}}, recycle:'',
         repostsManual: v.p.length-1, igPosts: v.p, igStatus:'recent', igCheckedAt: ig.scraped, createdBy: 'Instagram scan', createdAt: Date.now() });
       n++;
     }
-    await saveSettings(s => { s.igAdd = ig.addVersion; });
+    await saveSettings(s => { s.igAdd = ig.addVersion; if (ig.calVersion) s.igCal = ig.calVersion; });
     if (n) toast(`Added ${n} Instagram posts to the Library`);
   } catch(e){ console.warn('IG add failed', e); }
+  // recent posts also belong on the calendar: move library-only copies onto their posting day
+  if (doCal && !doAdd) try {
+    let n = 0;
+    for (const v of ig.add.filter(x => x.cal)) {
+      const url = v.p[0].u;
+      const p = S.posts.find(x => x.source === 'manual' && ((x.igPosts||[]).some(y => y.u === url) || x.link === url));
+      if (p) { await store.update('posts', p.id, { source:'calendar', status:'Posted', date: p.date || v.p[0].d }); n++; }
+    }
+    await saveSettings(s => { s.igCal = ig.calVersion; });
+    if (n) toast(`Put ${n} recent Instagram posts on the calendar`);
+  } catch(e){ console.warn('IG calendar move failed', e); }
   igSyncing = false;
 }
 
