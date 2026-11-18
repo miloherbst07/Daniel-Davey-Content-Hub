@@ -767,7 +767,7 @@ const isRepostEntry = p => !!p.repostOf && S.posts.some(x => x.id === p.repostOf
 const timesReposted = p => (p.repostsManual || 0) + repostsOf(p.id).filter(isPosted).length;
 const pendingRepost = p => repostsOf(p.id).filter(x => !isPosted(x) || (x.date||'') > todayISO()).sort((a,b)=>(a.date||'').localeCompare(b.date||''))[0];
 const repostReady = p => !isRepostEntry(p) && !pendingRepost(p) && (isPosted(p) || p.source==='manual') && !!lastDate(p) && weeksSince(lastDate(p)) >= (S.settings?.repostWeeks ?? 12) && p.recycle !== 'retire';
-const notInLib = p => p.source!=='manual' && !isPosted(p) && !!p.date && p.date <= todayISO();
+const notInLib = p => p.source!=='manual' && !isPosted(p) && !!p.date && p.date < todayISO();
 const igOld = p => p.igStatus === 'old';
 const totalViews = p => (p.platforms||[]).reduce((a,pl)=>a+(p.stats?.[pl]?.views||0),0);
 const byCreated = (a,b) => (a.createdAt||0)-(b.createdAt||0);
@@ -1638,7 +1638,7 @@ function lastDate(p){ const t = todayISO(); const ds = [p.lastPosted, p.date, ..
 const coverOf = p => p.thumbId || p.screenshotId || (p.repostOf ? (S.posts.find(x=>x.id===p.repostOf)?.thumbId || S.posts.find(x=>x.id===p.repostOf)?.screenshotId || '') : '');
 function viewLibrary(){
   const {funnel, recycle, format, sort, q} = S.lf; const ql = q.toLowerCase();
-  let all = S.posts.filter(p => (isPosted(p) || p.source==='manual') && !isRepostEntry(p)
+  let all = S.posts.filter(p => (isPosted(p) || p.source==='manual') && !isRepostEntry(p) && !p.mergedInto
     && (funnel==='all' || p.funnelId===funnel)
     && (format==='all' || (p.format||'reel')===format)
     && (recycle==='all' || (p.recycle||'')===recycle)
@@ -1739,7 +1739,7 @@ function libCard(p){
 function reviewRows(){
   const r = S.rv;
   const rows = [];
-  S.posts.filter(p => isPosted(p) && (r.funnel==='all'||p.funnelId===r.funnel) && (r.type==='all'||p.typeId===r.type)
+  S.posts.filter(p => isPosted(p) && !p.mergedInto && (r.funnel==='all'||p.funnelId===r.funnel) && (r.type==='all'||p.typeId===r.type)
     && (!r.from || (p.date && p.date>=r.from)) && (!r.to || (p.date && p.date<=r.to)))
     .forEach(p => (p.platforms||[]).forEach(pl => { if (r.platform!=='all' && pl!==r.platform) return;
       const st = p.stats?.[pl] || {}; const pm = plat(pl).metrics;
@@ -2322,7 +2322,7 @@ async function importVideoData(data){
     if (v.thumbnail) { try { thumbId = await uploadImage(String(v.thumbnail).startsWith('data:') ? dataURLtoBlob(v.thumbnail) : await (await fetch(v.thumbnail)).blob()); } catch(e){ console.warn('thumb failed', e); } }
     const plats = (v.platforms||['ig']).map(x=>String(x).toLowerCase()).map(x => ({instagram:'ig',facebook:'fb',tiktok:'tt',youtube:'ytl','youtube shorts':'yts',shorts:'yts'}[x] || x)).filter(x=>plat(x));
     await store.add('posts', { title: v.title || 'Untitled video', date: v.date || '', lastPosted: v.lastPosted || '', link: v.link || '', funnelId: f.id, typeId: ty?.id || '',
-      status: STATUSES.includes(v.status) ? v.status : 'Posted', source: v.status && v.status!=='Posted' || v.schedule ? 'calendar' : 'manual', time: v.time || '',
+      format: v.format || 'reel', status: STATUSES.includes(v.status) ? v.status : 'Posted', source: v.status && v.status!=='Posted' || v.schedule ? 'calendar' : 'manual', time: v.time || '',
       platforms: plats.length?plats:['ig'], notes: v.notes || '', caption: v.caption || '', driveLink: v.driveLink || '', repostOf, screenshotId:'', thumbId, stats: v.stats || {}, recycle: v.recycle || '',
       createdBy: S.me.name, createdAt: Date.now() });
     known.add(key); added++;
@@ -2461,6 +2461,35 @@ async function applyIgSync(){
   igSyncing = false;
 }
 
+// ---------- auto-post: once its day has passed, a scheduled or edited calendar post counts as Posted ----------
+let autoPosting = false;
+async function autoPostPast(){
+  if (autoPosting || seeding || igSyncing || !S.settings || !S.loaded.has('posts')) return;
+  const t = todayISO();
+  const due = S.posts.filter(p => p.source !== 'manual' && p.date && p.date < t && (p.status === 'Scheduled' || p.status === 'Edited'));
+  if (!due.length) return;
+  autoPosting = true;
+  const norm = x => String(x||'').toLowerCase().replace(/\(.*?\)/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
+  try {
+    for (const p of due) {
+      const patch = { status:'Posted', autoPostedAt: Date.now() };
+      // the Instagram scan may already have added this video to the Library: fold its stats in and hide the copy
+      const dup = S.posts.find(x => x.source === 'manual' && x.createdBy === 'Instagram scan' && !x.mergedInto && x.date
+        && norm(x.title) === norm(p.title) && Math.abs(parseISO(x.date) - parseISO(p.date)) <= 3*864e5);
+      if (dup) {
+        Object.assign(patch, { igPosts: dup.igPosts || [], igStatus: dup.igStatus || 'recent', igCheckedAt: dup.igCheckedAt || '',
+          stats: {...(dup.stats||{}), ...(p.stats||{})} });
+        if (!p.thumbId && !p.screenshotId && dup.thumbId) patch.thumbId = dup.thumbId;
+        if (!p.link && dup.link) patch.link = dup.link;
+        await store.update('posts', dup.id, { mergedInto: p.id });
+      }
+      await store.update('posts', p.id, patch);
+    }
+    toast(`Marked ${due.length} past post${due.length===1?'':'s'} as Posted`);
+  } catch(e){ console.warn('auto-post failed', e); }
+  autoPosting = false;
+}
+
 // ---------- seeding ----------
 let seeding = false;
 async function seedEverything(){
@@ -2522,7 +2551,8 @@ function startSync(){
     if (!S.me) { let n = null; try { n = localStorage.getItem('verus_demo_user'); } catch {} S.me = {name: data.members.find(x=>x.name===n)?.name || data.members[0]?.name || 'Milo', email:''}; }
     requestRender();
   });
-  COLLS.forEach(c => store.subscribe(c, list => { S[c] = list; S.loaded.add(c); if (S.settings) requestRender(); if (c==='ideas') setTimeout(maybeMigrate, 0); if (c==='posts') applyIgSync(); }));
+  COLLS.forEach(c => store.subscribe(c, list => { S[c] = list; S.loaded.add(c); if (S.settings) requestRender(); if (c==='ideas') setTimeout(maybeMigrate, 0); if (c==='posts') { applyIgSync(); setTimeout(autoPostPast, 1500); } }));
+  setInterval(autoPostPast, 60*60*1000);
 }
 function showDenied(){
   $('#app').innerHTML = `<div class="card login"><h1>VERUS</h1><p>This account (${esc(AUTH?.user?.email||'')}) isn't on the team list in the Firestore security rules.</p><p class="tiny">Ask Milo to add your email to <code>firestore.rules</code> and publish them again.</p><button class="btn" id="so">Sign out</button></div>`;
